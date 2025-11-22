@@ -10,4 +10,7 @@ import java.util.Optional;
 public interface LastTopicRepository extends JpaRepository<LastTopic, String> {
 
     Optional<LastTopic> getByCourseIdAndUserId(String courseId, String userId);
+
+//    void deleteByUserIdAndCourseId(String userId, String courseId);
+
 }
