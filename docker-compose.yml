@@ -1,0 +1,17 @@
+version: '3.9'
+
+services:
+  postgres:
+    container_name: cs_progress_postgres
+    image: postgres:16.3
+    environment:
+      POSTGRES_DB: cs_progress
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - progress_data:/var/lib/db
+    ports:
+      - "5439:5432"
+
+volumes:
+  progress_data:
