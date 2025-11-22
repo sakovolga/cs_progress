@@ -22,4 +22,6 @@ public class LastTopicController {
 
         return lastTopicService.get(courseId, userId);
     }
+
+
 }
