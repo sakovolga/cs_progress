@@ -1,9 +1,9 @@
 package com.example.cs_progress.model.entity;
 
+import com.example.cs_common.dto.key.LastTopicId;
 import jakarta.persistence.Column;
+import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -12,7 +12,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.UuidGenerator;
 
 import java.time.LocalDateTime;
 
@@ -24,17 +23,9 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class LastTopic {
-    @Id
-    @GeneratedValue
-    @UuidGenerator
-    @Column(name = "id")
-    private String id;
 
-    @Column(name = "user_id")
-    private String userId;
-
-    @Column(name = "course_id")
-    private String courseId;
+    @EmbeddedId
+    private LastTopicId id;
 
     @Column(name = "topic_id")
     private String topicId;
