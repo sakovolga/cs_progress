@@ -21,7 +21,7 @@ public class LessonViewedEventListener {
     @RabbitListener(queues = "${rabbitmq.queue.lesson-viewed:progress.lesson.viewed}")
     public void handleLessonViewedEvent(@Payload LessonViewedEvent event) {
         log.info("Received lesson viewed event: userId={}, courseId={}, topicId={}",
-                event.getUserId(), event.getCourseId(), event.getTopicId());
+                event.getLastTopicId().getUserId(), event.getLastTopicId().getCourseId(), event.getTopicId());
 
         try {
             // Валидация события
@@ -30,7 +30,7 @@ public class LessonViewedEventListener {
             // Сохранение/обновление последнего топика
             lastTopicService.saveOrUpdateLastTopic(event);
 
-            log.info("Successfully processed lesson viewed event for user: {}", event.getUserId());
+            log.info("Successfully processed lesson viewed event for user: {}", event.getLastTopicId().getUserId());
 
         } catch (IllegalArgumentException e) {
             // Невалидное событие - логируем и не ретраим
@@ -48,10 +48,10 @@ public class LessonViewedEventListener {
      * Валидация события
      */
     private void validateEvent(LessonViewedEvent event) {
-        if (event.getUserId() == null || event.getUserId().isBlank()) {
+        if (event.getLastTopicId().getUserId() == null || event.getLastTopicId().getUserId().isBlank()) {
             throw new IllegalArgumentException("userId cannot be null or empty");
         }
-        if (event.getCourseId() == null || event.getCourseId().isBlank()) {
+        if (event.getLastTopicId().getCourseId() == null || event.getLastTopicId().getCourseId().isBlank()) {
             throw new IllegalArgumentException("courseId cannot be null or empty");
         }
         if (event.getTopicId() == null || event.getTopicId().isBlank()) {
