@@ -36,9 +36,9 @@ spring:
           max-attempts: 3
           multiplier: 2
           max-interval: 10000
-    queue:
-      lesson-viewed: progress.lesson.viewed
-      dlx: dlx.progress.lesson.viewed
+#    queue:
+#      lesson-viewed: progress.lesson.viewed
+#      dlx: dlx.progress.lesson.viewed
   
   # Logging
   logging:

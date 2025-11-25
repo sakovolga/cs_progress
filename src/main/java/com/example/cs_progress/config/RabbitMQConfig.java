@@ -22,8 +22,8 @@ public class RabbitMQConfig {
     public static final String LESSON_VIEWED_ROUTING_KEY = "lesson.viewed";
 
     // Dead Letter Exchange для failed messages
-    public static final String DLX_EXCHANGE = "dlx.exchange";
-    public static final String DLX_QUEUE = "dlx.progress.lesson.viewed";
+//    public static final String DLX_EXCHANGE = "dlx.exchange";
+//    public static final String DLX_QUEUE = "dlx.progress.lesson.viewed";
 
     @Bean
     public TopicExchange progressExchange() {
@@ -34,8 +34,8 @@ public class RabbitMQConfig {
     public Queue lessonViewedQueue() {
         return QueueBuilder
                 .durable(LESSON_VIEWED_QUEUE)
-                .withArgument("x-dead-letter-exchange", DLX_EXCHANGE)
-                .withArgument("x-dead-letter-routing-key", "dlx.lesson.viewed")
+//                .withArgument("x-dead-letter-exchange", DLX_EXCHANGE)
+//                .withArgument("x-dead-letter-routing-key", "dlx.lesson.viewed")
                 .build();
     }
 
@@ -48,23 +48,23 @@ public class RabbitMQConfig {
     }
 
     // Dead Letter Queue setup
-    @Bean
-    public DirectExchange deadLetterExchange() {
-        return new DirectExchange(DLX_EXCHANGE);
-    }
-
-    @Bean
-    public Queue deadLetterQueue() {
-        return QueueBuilder.durable(DLX_QUEUE).build();
-    }
-
-    @Bean
-    public Binding deadLetterBinding(Queue deadLetterQueue, DirectExchange deadLetterExchange) {
-        return BindingBuilder
-                .bind(deadLetterQueue)
-                .to(deadLetterExchange)
-                .with("dlx.lesson.viewed");
-    }
+//    @Bean
+//    public DirectExchange deadLetterExchange() {
+//        return new DirectExchange(DLX_EXCHANGE);
+//    }
+//
+//    @Bean
+//    public Queue deadLetterQueue() {
+//        return QueueBuilder.durable(DLX_QUEUE).build();
+//    }
+//
+//    @Bean
+//    public Binding deadLetterBinding(Queue deadLetterQueue, DirectExchange deadLetterExchange) {
+//        return BindingBuilder
+//                .bind(deadLetterQueue)
+//                .to(deadLetterExchange)
+//                .with("dlx.lesson.viewed");
+//    }
 
     @Bean
     public MessageConverter jsonMessageConverter() {
