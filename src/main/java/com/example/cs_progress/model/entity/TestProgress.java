@@ -1,0 +1,56 @@
+package com.example.cs_progress.model.entity;
+
+import com.example.cs_common.enums.TestStatus;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = "tests_progress")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class TestProgress extends IdentifiableEntity{
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "tests_result_id", referencedColumnName = "id")
+    @JsonBackReference
+    private TestsResult testsResult;
+
+    @Column(name = "test_id", nullable = false)
+    private String testId;
+
+
+
+    @Column(name = "status", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private TestStatus status;
+//
+//    @Column(name = "current_test_item_index")
+//    private Integer currentTestItemIndex;
+
+    @Column(name = "score")
+    private Double score;
+
+    @OneToMany(mappedBy = "testProgress", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<TestItemResult> testItemResults = new ArrayList<>();
+}

@@ -17,13 +17,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "quizzes_result")
+@Table(name = "tests_results")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class QuizzesResult extends IdentifiableEntity{
+public class TestsResult extends IdentifiableEntity{
 
     @Column(name = "user_id")
     private String userId;
@@ -35,10 +35,10 @@ public class QuizzesResult extends IdentifiableEntity{
     private String topicId;
 
     @Column(name = "best_score")
-    private Integer bestScore;
+    private Double bestScore;
 
-    @OneToMany(mappedBy = "quizzesResult", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "testsResult", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonManagedReference
     @Builder.Default
-    private List<Quiz> quizzes = new ArrayList<>();
+    private List<TestProgress> testProgresses = new ArrayList<>();
 }
