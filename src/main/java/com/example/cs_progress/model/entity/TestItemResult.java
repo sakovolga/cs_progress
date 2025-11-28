@@ -1,6 +1,5 @@
 package com.example.cs_progress.model.entity;
 
-import com.example.cs_common.enums.Difficulty;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -14,33 +13,30 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "test_results")
+@Table(name = "test_item_results")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TestResult extends IdentifiableEntity{
+public class TestItemResult extends IdentifiableEntity{
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "quiz_id", referencedColumnName = "id")
-    private Quiz quiz;
+    @JoinColumn(name = "test_progress_id", referencedColumnName = "id")
+    private TestProgress testProgress;
 
     @Column(name = "user_id", nullable = false)
     private String userId;
 
-    @Column(name = "test_id", nullable = false)
-    private String testId;
-
-    @Column(name = "difficulty")
-    private Difficulty difficulty;
+    @Column(name = "test_item_id", nullable = false)
+    private String testItemId;
 
     @Column(name = "score", nullable = false)
-    private Integer score;
-
-    @Column(name = "course_id", nullable = false)
-    private String courseId;
-
-    @Column(name = "topic_id", nullable = false)
-    private String topicId;
+    private Double score;
+//
+//    @Column(name = "course_id", nullable = false)
+//    private String courseId;
+//
+//    @Column(name = "topic_id", nullable = false)
+//    private String topicId;
 }
