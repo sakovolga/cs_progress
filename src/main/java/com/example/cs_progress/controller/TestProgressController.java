@@ -1,15 +1,31 @@
 package com.example.cs_progress.controller;
 
+import com.example.cs_common.dto.response.CurrentTestInfoRs;
+import com.example.cs_progress.service.TestProgressService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/testProgress")
+@RequestMapping("/api/test-progress")
 @Slf4j
 public class TestProgressController {
+
+    private final TestProgressService testProgressService;
+
+    @GetMapping
+    public CurrentTestInfoRs getCurrentTestInfo(@RequestParam String userId,
+                                                @RequestParam String courseId,
+                                                @RequestParam String topicId) {
+        log.info("== REQUEST getCurrentTestInfo for the userId: {} in the course with id: {} and topic id: {} ==",
+                userId, courseId, topicId);
+
+        return testProgressService.getCurrentTestInfo(userId, courseId, topicId);
+    }
 
 
 }

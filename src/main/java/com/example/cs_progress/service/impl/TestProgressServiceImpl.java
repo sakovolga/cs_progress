@@ -26,7 +26,7 @@ public class TestProgressServiceImpl implements TestProgressService {
 
     @Override
     public CurrentTestInfoRs getCurrentTestInfo(@NonNull final String userId,
-                                                @NonNull final String courseId,
+                                                @NonNull final String courseId, //не используется, но оставлен для возможного будущего использования
                                                 @NonNull final String topicId) {
         log.info(
                 "Attempting to get next step in test for user with id: {} in topic with id: {} in course with id: {}",
@@ -38,7 +38,8 @@ public class TestProgressServiceImpl implements TestProgressService {
             log.info("There is no started tests for user with id: {} in topic with id: {}", userId, topicId);
 
             return CurrentTestInfoRs.builder()
-                    .currentTestItemIndex(-1)
+                    .isAllAttemptsUsed(false)
+                    .isTestCompleted(false)
                     .build();
         }
 
