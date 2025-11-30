@@ -20,6 +20,7 @@ import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Table(name = "tests_progress")
@@ -28,7 +29,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TestProgress extends IdentifiableEntity{
+public class TestProgress extends IdentifiableEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "tests_result_id", referencedColumnName = "id")
@@ -37,7 +38,6 @@ public class TestProgress extends IdentifiableEntity{
 
     @Column(name = "test_id", nullable = false)
     private String testId;
-
 
 
     @Column(name = "status", nullable = false)
@@ -53,4 +53,19 @@ public class TestProgress extends IdentifiableEntity{
     @OneToMany(mappedBy = "testProgress", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
     private List<TestItemResult> testItemResults = new ArrayList<>();
+
+//    private void addTestItemResult(TestItemResult testItemResult) {
+//        testItemResults.add(testItemResult);
+//        testItemResult.setTestProgress(this);
+//    }
+
+    public void updateScore() {
+        this.score = testItemResults == null ? 0.0 :
+                testItemResults.stream()
+                        .map(TestItemResult::getScore)
+                        .filter(Objects::nonNull)
+                        .mapToDouble(Double::doubleValue)
+                        .sum();
+    }
+
 }
