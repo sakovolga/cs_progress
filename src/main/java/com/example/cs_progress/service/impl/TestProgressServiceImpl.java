@@ -1,18 +1,29 @@
 package com.example.cs_progress.service.impl;
 
+import com.example.cs_common.dto.event.TestItemResolvedEvent;
+import com.example.cs_common.dto.request.TestItemUserResolvedRq;
 import com.example.cs_common.dto.response.CurrentTestInfoRs;
+import com.example.cs_common.dto.response.TestResultRs;
 import com.example.cs_common.enums.TestStatus;
+import com.example.cs_common.exception.NotFoundException;
+import com.example.cs_progress.mapper.TestItemResultMapper;
+import com.example.cs_progress.mapper.TestProgressMapper;
+import com.example.cs_progress.model.entity.TestItemResult;
 import com.example.cs_progress.model.entity.TestProgress;
 import com.example.cs_progress.model.entity.TestsResult;
+import com.example.cs_progress.repository.TestProgressRepository;
 import com.example.cs_progress.repository.TestsResultRepository;
 import com.example.cs_progress.service.TestProgressService;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+
+import static com.example.cs_common.exception.error.SystemError.ENTITY_NOT_FOUND_ERROR;
 
 @Service
 @RequiredArgsConstructor
@@ -20,11 +31,16 @@ import java.util.Optional;
 public class TestProgressServiceImpl implements TestProgressService {
 
     private final TestsResultRepository testsResultRepository;
+    private final TestProgressRepository testProgressRepository;
+    private final TestItemResultMapper testItemResultMapper;
+    private final TestProgressMapper testProgressMapper;
 
     private static final int MAX_NUMBER_OF_TEST = 3;
     private static final int MAX_TEST_ITEM_INDEX = 9;
+    private static final int MAX_NUMBER_OF_TEST_ITEMS = 10;
 
     @Override
+    @Transactional(readOnly = true)
     public CurrentTestInfoRs getCurrentTestInfo(@NonNull final String userId,
                                                 @NonNull final String courseId, //не используется, но оставлен для возможного будущего использования
                                                 @NonNull final String topicId) {
@@ -76,6 +92,53 @@ public class TestProgressServiceImpl implements TestProgressService {
                 .currentTestId(lastTestProgress.getTestId())
                 .currentTestItemIndex(currentIndex)
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public TestResultRs finishTest(@NonNull final TestItemUserResolvedRq rq) {
+        log.info("Attempting to finish test with request: {}", rq);
+
+        TestProgress testProgress = testProgressRepository
+                .findById(rq.getTestItemResolvedRq().getTestId())
+                .orElseThrow(() -> new NotFoundException(
+                        "TestProgress with id: " + rq.getTestItemResolvedRq().getTestId() + " not found",
+                        ENTITY_NOT_FOUND_ERROR)
+                );
+
+        TestItemResult testItemResult = testItemResultMapper.toTestItemResult(rq, testProgress);
+        testProgress.getTestItemResults().add(testItemResult);
+
+        if (testProgress.getTestItemResults().size() != MAX_NUMBER_OF_TEST_ITEMS) {
+            throw new IllegalStateException("Cannot finish test before answering all test items");
+        }
+
+        testProgress.updateScore();
+        testProgress.setStatus(TestStatus.COMPLETED);
+
+        TestResultRs rs = testProgressMapper.toTestResultRs(testProgress);
+
+        log.info("Test with id: {} was finished with result: {}", testProgress.getTestId(), rs);
+        return rs;
+    }
+
+    @Override
+    @Transactional
+    public void processResolvedTestItem(@NonNull final TestItemResolvedEvent event) {
+        log.info("Processing TestItemResolvedEvent: {}", event);
+
+        TestProgress testProgress = testProgressRepository
+                .findById(event.getTestId())
+                .orElseThrow(() -> new NotFoundException(
+                        "TestProgress with id: " + event.getTestId() + " not found",
+                        ENTITY_NOT_FOUND_ERROR)
+                );
+
+        TestItemResult testItemResult = testItemResultMapper.toTestItemResult(event, testProgress);
+        testProgress.getTestItemResults().add(testItemResult);
+        testProgress.updateScore();
+
+        log.info("Processed TestItemResolvedEvent for test with id: {}", testProgress.getTestId());
     }
 
     private boolean allAttemptsUsed(@NonNull final List<TestProgress> progressList) {
