@@ -11,8 +11,7 @@ import java.util.Optional;
 public interface TestsResultRepository extends JpaRepository<TestsResult, String> {
 
     @EntityGraph(attributePaths = {
-            "testProgresses",
-            "testProgresses.testItemResults"
+            "testProgresses"
     })
     Optional<TestsResult> findByUserIdAndTopicId(String userId, String topicId);
 }
