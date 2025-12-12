@@ -1,12 +1,13 @@
 spring:
   application:
     name: cs_progress
+  
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
-    
+  
   jpa:
     hibernate:
       ddl-auto: update
@@ -15,37 +16,58 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
-    
+  
+  # ============= RABBITMQ НАСТРОЙКИ =============
   rabbitmq:
-    host: ${RABBITMQ_HOST}
-    port: ${RABBITMQ_PORT}
-    username: ${RABBITMQ_USERNAME}
-    password: ${RABBITMQ_PASSWORD}
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
     
-    # Listener settings
     listener:
       simple:
-        acknowledge-mode: auto
+        message-converter: jackson2JsonMessageConverter
+        # Количество параллельных обработчиков
         concurrency: 3
         max-concurrency: 10
+        # Количество сообщений, получаемых за раз
         prefetch: 10
-        default-requeue-rejected: false # Не возвращать в очередь при ошибке
+        # Автоматическое acknowledge
+        acknowledge-mode: auto
+        # Retry настройки
         retry:
           enabled: true
           initial-interval: 2000
           max-attempts: 3
-          multiplier: 2
+          multiplier: 2.0
           max-interval: 10000
-#    queue:
-#      lesson-viewed: progress.lesson.viewed
-#      dlx: dlx.progress.lesson.viewed
   
-  # Logging
+  # ЛОГИРОВАНИЕ
   logging:
     level:
-      org.springframework.amqp: DEBUG
+      # RabbitMQ логи
+      org.springframework.amqp: INFO
+      org.springframework.amqp.rabbit.retry: DEBUG
+      org.springframework.amqp.rabbit.retry.RepublishMessageRecoverer: INFO
+      com.rabbitmq.client: WARN
+      org.springframework.retry: DEBUG
+      
+      # Наши логи
+      com.example.cs_progress: DEBUG
       com.example.cs_progress.listener: DEBUG
       com.example.cs_progress.service: DEBUG
     
+    pattern:
+      console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
 server:
-  port: ${SERVER_PORT}
+  port: ${SERVER_PORT:8083}
+
+# Кастомные настройки DLQ
+app:
+  rabbitmq:
+    dlq:
+      max-retries: 3
+      alert-threshold: 50
+      cleanup-hours: 48  # Через 48 часов удалять из DLQ

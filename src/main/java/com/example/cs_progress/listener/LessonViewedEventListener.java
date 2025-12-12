@@ -15,43 +15,35 @@ public class LessonViewedEventListener {
 
     private final LastTopicService lastTopicService;
 
-    /**
-     * Слушает события просмотра уроков из RabbitMQ
-     */
-    @RabbitListener(queues = "${rabbitmq.queue.lesson-viewed:progress.lesson.viewed}")
+    @RabbitListener(queues = "lesson.viewed.queue") // Точное имя очереди!
     public void handleLessonViewedEvent(@Payload LessonViewedEvent event) {
-        log.info("Received lesson viewed event: userId={}, courseId={}, topicId={}",
-                event.getLastTopicId().getUserId(), event.getLastTopicId().getCourseId(), event.getTopicId());
+        log.info("🎯 Received lesson viewed event: userId={}, courseId={}, topicId={}",
+                event.getLastTopicId().getUserId(),
+                event.getLastTopicId().getCourseId(),
+                event.getTopicId());
 
         try {
-            // Валидация события
             validateEvent(event);
-
-            // Сохранение/обновление последнего топика
             lastTopicService.saveOrUpdateLastTopic(event);
-
-            log.info("Successfully processed lesson viewed event for user: {}", event.getLastTopicId().getUserId());
+            log.info("✅ Successfully processed lesson viewed event for user: {}",
+                    event.getLastTopicId().getUserId());
 
         } catch (IllegalArgumentException e) {
-            // Невалидное событие - логируем и не ретраим
-            log.error("Invalid lesson viewed event: {}", e.getMessage());
-            // Сообщение будет acknowledge и удалено из очереди
+            log.error("❌ Invalid lesson viewed event: {}", e.getMessage());
 
         } catch (Exception e) {
-            // Ошибка обработки - пробрасываем для retry
-            log.error("Failed to process lesson viewed event", e);
-            throw e; // RabbitMQ сделает retry согласно настройкам
+            log.error("❌ Failed to process lesson viewed event", e);
+            throw e;
         }
     }
 
-    /**
-     * Валидация события
-     */
     private void validateEvent(LessonViewedEvent event) {
-        if (event.getLastTopicId().getUserId() == null || event.getLastTopicId().getUserId().isBlank()) {
+        if (event.getLastTopicId().getUserId() == null ||
+                event.getLastTopicId().getUserId().isBlank()) {
             throw new IllegalArgumentException("userId cannot be null or empty");
         }
-        if (event.getLastTopicId().getCourseId() == null || event.getLastTopicId().getCourseId().isBlank()) {
+        if (event.getLastTopicId().getCourseId() == null ||
+                event.getLastTopicId().getCourseId().isBlank()) {
             throw new IllegalArgumentException("courseId cannot be null or empty");
         }
         if (event.getTopicId() == null || event.getTopicId().isBlank()) {
