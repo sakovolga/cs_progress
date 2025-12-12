@@ -1,6 +1,7 @@
 package com.example.cs_progress.listener;
 
 import com.example.cs_common.dto.event.TestItemResolvedEvent;
+import com.example.cs_common.exception.NotFoundException;
 import com.example.cs_progress.service.TestProgressService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,27 +16,30 @@ public class TestItemResolvedEventListener {
 
     private final TestProgressService testProgressService;
 
-    /**
-     * Listens for "test item resolved" events from RabbitMQ
-     */
-    @RabbitListener(queues = "${rabbitmq.queue.test-item-resolved:progress.test.item.resolved}")
+    @RabbitListener(queues = "test.item.resolved.queue")
     public void handleTestItemResolved(@Payload TestItemResolvedEvent event) {
-        log.info("Received test item resolved event: userId={}, testId={}, score={}",
+        log.info("🎯 Received test item resolved event: userId={}, testId={}, score={}",
                 event.getUserId(), event.getTestId(), event.getTestItemScore());
 
         try {
             validateEvent(event);
-
             testProgressService.processResolvedTestItem(event);
-
-            log.info("Successfully processed test item resolved event for testId={}", event.getTestId());
+            log.info("✅ Successfully processed test item resolved event for testId={}",
+                    event.getTestId());
 
         } catch (IllegalArgumentException e) {
-            log.error("Invalid test item resolved event: {}", e.getMessage());
-            // ack and remove
+            log.error("❌ Invalid test item resolved event: {}", e.getMessage());
+            // Не пробрасываем - сообщение будет acknowledge и удалено
+
+        } catch (NotFoundException e) {
+            log.warn("⚠️ TestProgress not found for testId: {}. Event will be acknowledged.",
+                    event.getTestId());
+            // Не пробрасываем - нет смысла retry
+            log.debug("   Event details: {}", event);
+
         } catch (Exception e) {
-            log.error("Failed to process test item resolved event", e);
-            throw e; // retry
+            log.error("❌ Failed to process test item resolved event", e);
+            throw e; // Retry для других ошибок
         }
     }
 

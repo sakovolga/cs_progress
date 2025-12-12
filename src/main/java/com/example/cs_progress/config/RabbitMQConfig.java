@@ -1,107 +1,74 @@
 package com.example.cs_progress.config;
 
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.TopicExchange;
-import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.core.QueueBuilder;
+import com.example.cs_common.config.RabbitMQCommonConfig;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.rabbit.config.RetryInterceptorBuilder;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.amqp.rabbit.retry.MessageRecoverer;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.retry.interceptor.RetryOperationsInterceptor;
 
+@Slf4j
 @Configuration
+@Import(RabbitMQCommonConfig.class)
 public class RabbitMQConfig {
-
-    public static final String PROGRESS_EXCHANGE = "progress.exchange";
-
-    // Lesson viewed
-    public static final String LESSON_VIEWED_QUEUE = "progress.lesson.viewed";
-    public static final String LESSON_VIEWED_ROUTING_KEY = "lesson.viewed";
-
-    // Test item resolved
-    public static final String TEST_ITEM_RESOLVED_QUEUE = "progress.test.item.resolved";
-    public static final String TEST_ITEM_RESOLVED_ROUTING_KEY = "test.item.resolved";
-
-    // DLX (оставляем закомментированным)
-//    public static final String DLX_EXCHANGE = "dlx.exchange";
-//    public static final String DLX_QUEUE = "dlx.progress";
-
-    @Bean
-    public TopicExchange progressExchange() {
-        return new TopicExchange(PROGRESS_EXCHANGE, true, false);
-    }
-
-    // --------------------------
-    // LESSON VIEWED
-    // --------------------------
-
-    @Bean
-    public Queue lessonViewedQueue() {
-        return QueueBuilder
-                .durable(LESSON_VIEWED_QUEUE)
-//                .withArgument("x-dead-letter-exchange", DLX_EXCHANGE)
-//                .withArgument("x-dead-letter-routing-key", "dlx.lesson.viewed")
-                .build();
-    }
-
-    @Bean
-    public Binding lessonViewedBinding(Queue lessonViewedQueue, TopicExchange progressExchange) {
-        return BindingBuilder
-                .bind(lessonViewedQueue)
-                .to(progressExchange)
-                .with(LESSON_VIEWED_ROUTING_KEY);
-    }
-
-    // --------------------------
-    // TEST ITEM RESOLVED (NEW)
-    // --------------------------
-
-    @Bean
-    public Queue testItemResolvedQueue() {
-        return QueueBuilder
-                .durable(TEST_ITEM_RESOLVED_QUEUE)
-//                .withArgument("x-dead-letter-exchange", DLX_EXCHANGE)
-//                .withArgument("x-dead-letter-routing-key", "dlx.test.item.resolved")
-                .build();
-    }
-
-    @Bean
-    public Binding testItemResolvedBinding(Queue testItemResolvedQueue, TopicExchange progressExchange) {
-        return BindingBuilder
-                .bind(testItemResolvedQueue)
-                .to(progressExchange)
-                .with(TEST_ITEM_RESOLVED_ROUTING_KEY);
-    }
-
-    // --------------------------
-    // Message Converter & Listener Factory
-    // --------------------------
-
-    @Bean
-    public MessageConverter jsonMessageConverter() {
-        return new Jackson2JsonMessageConverter();
-    }
-
-    @Bean
-    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
-        RabbitTemplate template = new RabbitTemplate(connectionFactory);
-        template.setMessageConverter(jsonMessageConverter());
-        return template;
-    }
 
     @Bean
     public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
-            ConnectionFactory connectionFactory) {
+            ConnectionFactory connectionFactory,
+            RetryOperationsInterceptor retryInterceptor,
+            MessageConverter messageConverter) {  // ← ДОБАВЬТЕ ЭТОТ ПАРАМЕТР
+
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
         factory.setConnectionFactory(connectionFactory);
-        factory.setMessageConverter(jsonMessageConverter());
-        factory.setConcurrentConsumers(3);
-        factory.setMaxConcurrentConsumers(10);
-        factory.setPrefetchCount(10);
+        factory.setDefaultRequeueRejected(false);
+        factory.setAdviceChain(retryInterceptor);
+
+        // 3. КРИТИЧЕСКИ ВАЖНО: установите MessageConverter!
+        factory.setMessageConverter(messageConverter);
+
+        log.info("✅ RabbitListenerContainerFactory configured with MessageConverter: {}",
+                messageConverter.getClass().getSimpleName());
+
         return factory;
+    }
+
+    @Bean
+    public RetryOperationsInterceptor retryOperationsInterceptor(RabbitTemplate rabbitTemplate) {
+        return RetryInterceptorBuilder.stateless()
+                .maxAttempts(3)
+                .backOffOptions(2000, 2.0, 10000)
+                .recoverer(new MessageRecoverer() {
+                    @Override
+                    public void recover(Message message, Throwable cause) {
+                        // Определяем правильную DLQ
+                        String receivedRoutingKey = message.getMessageProperties().getReceivedRoutingKey();
+                        String dlqRoutingKey = "test.item.resolved.dlq"; // по умолчанию
+
+                        if ("test.item.resolved".equals(receivedRoutingKey)) {
+                            dlqRoutingKey = "test.item.resolved.dlq";
+                        } else if ("lesson.viewed".equals(receivedRoutingKey)) {
+                            dlqRoutingKey = "lesson.viewed.dlq";
+                        } else if ("progress".equals(receivedRoutingKey)) {
+                            dlqRoutingKey = "progress.dlq";
+                        }
+
+                        log.warn("Republishing to {} (original routing key: {})",
+                                dlqRoutingKey, receivedRoutingKey);
+
+                        rabbitTemplate.send(
+                                com.example.cs_common.constants.RabbitMQConstants.DLX_EXCHANGE,
+                                dlqRoutingKey,
+                                message
+                        );
+                    }
+                })
+                .build();
     }
 }
