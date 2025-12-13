@@ -127,18 +127,73 @@ public class TestProgressServiceImpl implements TestProgressService {
     public void processResolvedTestItem(@NonNull final TestItemResolvedEvent event) {
         log.info("Processing TestItemResolvedEvent: {}", event);
 
-        TestProgress testProgress = testProgressRepository
-                .findById(event.getTestId())
-                .orElseThrow(() -> new NotFoundException(
-                        "TestProgress with id: " + event.getTestId() + " not found",
-                        ENTITY_NOT_FOUND_ERROR)
-                );
+        // Попытка найти существующий TestsResult
+        Optional<TestsResult> optionalTestsResult = testsResultRepository
+                .findByUserIdAndTopicId(event.getUserId(), event.getTopicId());
 
-        TestItemResult testItemResult = testItemResultMapper.toTestItemResult(event, testProgress);
+        final TestsResult testsResult;
+        if (optionalTestsResult.isEmpty()) {
+            testsResult = TestsResult.builder()
+                    .userId(event.getUserId())
+                    .topicId(event.getTopicId())
+                    .courseId(event.getCourseId())
+                    .build();
+            testsResultRepository.save(testsResult);
+            log.info("No existing TestsResult found, creating new TestsResult for userId={} and topicId={}",
+                    event.getUserId(), event.getTopicId());
+
+        } else {
+            testsResult = optionalTestsResult.get();
+            log.info("Found existing TestsResult with id={} for userId={} and topicId={}",
+                    testsResult.getId(), event.getUserId(), event.getTopicId());
+        }
+
+        TestItemResult testItemResult = TestItemResult.builder()
+                .testItemId(event.getTestItemId())
+                .score(event.getTestItemScore())
+                .build();
+
+        // Поиск TestProgress для текущего теста
+        TestProgress testProgress = testsResult.getTestProgresses().stream()
+                .filter(tp -> tp.getTestId().equals(event.getTestId()))
+                .findFirst()
+                .orElseGet(() -> {
+                    TestProgress newProgress = getBuild(event, testsResult);
+                    testsResult.getTestProgresses().add(newProgress);
+                    log.info("No existing TestProgress found, creating new TestProgress for testId={}", event.getTestId());
+                    return newProgress;
+                });
+
+        // Проверка на дубликаты TestItemResult
+        boolean isNewTestItemResult = testProgress.getTestItemResults().stream()
+                .noneMatch(r -> r.getTestItemId().equals(testItemResult.getTestItemId()));
+
+        if (isNewTestItemResult) {
+            updateTestProgress(testProgress, testItemResult, testsResult);
+            log.info("Added new TestItemResult with testItemId={} to TestProgress testId={}",
+                    testItemResult.getTestItemId(), testProgress.getTestId());
+        } else {
+            log.info("TestItemResult with testItemId={} already exists in TestProgress testId={}",
+                    testItemResult.getTestItemId(), testProgress.getTestId());
+        }
+
+
+        log.info("TestItemResolvedEvent processed successfully: TestsResultId={}", testsResult.getId());
+    }
+
+
+    private static TestProgress getBuild(TestItemResolvedEvent event, TestsResult testsResult) {
+        return TestProgress.builder()
+                .testId(event.getTestId())
+                .testsResult(testsResult)
+                .build();
+    }
+
+    private static void updateTestProgress(TestProgress testProgress, TestItemResult testItemResult, TestsResult testsResult) {
         testProgress.getTestItemResults().add(testItemResult);
         testProgress.updateScore();
-
-        log.info("Processed TestItemResolvedEvent for test with id: {}", testProgress.getTestId());
+        testProgress.setTestsResult(testsResult);
+        testItemResult.setTestProgress(testProgress);
     }
 
     private boolean allAttemptsUsed(@NonNull final List<TestProgress> progressList) {

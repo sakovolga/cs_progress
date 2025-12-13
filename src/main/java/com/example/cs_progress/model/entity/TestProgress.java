@@ -39,16 +39,17 @@ public class TestProgress extends IdentifiableEntity {
     @Column(name = "test_id", nullable = false)
     private String testId;
 
-
     @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)
-    private TestStatus status;
+    @Builder.Default
+    private TestStatus status = TestStatus.ACTIVE;
 //
 //    @Column(name = "current_test_item_index")
 //    private Integer currentTestItemIndex;
 
     @Column(name = "score")
-    private Double score;
+    @Builder.Default
+    private Double score = 0.0;
 
     @OneToMany(mappedBy = "testProgress", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
