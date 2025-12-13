@@ -19,7 +19,6 @@ public class TestItemResultMapperImpl implements TestItemResultMapper {
         log.info("Mapping TestItemUserResolvedRq to TestItemResult: {}", rq);
 
         return TestItemResult.builder()
-                .userId(rq.getUserId())
                 .testItemId(rq.getTestItemResolvedRq().getTestItemId())
                 .testProgress(testProgress)
                 .score(rq.getTestItemResolvedRq().getTestItemScore())
@@ -31,7 +30,6 @@ public class TestItemResultMapperImpl implements TestItemResultMapper {
                                            @NonNull final TestProgress testProgress) {
         log.info("Mapping TestItemResolvedEvent to TestItemResult: {}", event);
         return TestItemResult.builder()
-                .userId(event.getUserId())
                 .testItemId(event.getTestItemId())
                 .testProgress(testProgress)
                 .score(event.getTestItemScore())

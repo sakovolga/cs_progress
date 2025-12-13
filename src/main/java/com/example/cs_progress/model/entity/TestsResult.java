@@ -35,7 +35,8 @@ public class TestsResult extends IdentifiableEntity{
     private String topicId;
 
     @Column(name = "best_score")
-    private Double bestScore;
+    @Builder.Default
+    private Double bestScore = 0.0;
 
     @OneToMany(mappedBy = "testsResult", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonManagedReference
