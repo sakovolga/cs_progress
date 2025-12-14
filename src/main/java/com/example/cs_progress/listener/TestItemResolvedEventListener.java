@@ -19,11 +19,11 @@ public class TestItemResolvedEventListener {
     @RabbitListener(queues = "test.item.resolved.queue")
     public void handleTestItemResolved(@Payload TestItemResolvedEvent event) {
         log.info("🎯 Received test item resolved event: " +
-                        "userId={}, testId={}, testItemId={}, orderNumber={}, score={}, topicId= {}, courseId= {}",
+                        "userId={}, testId={}, testItemId={}, index={}, score={}, topicId= {}, courseId= {}",
                 event.getUserId(),
                 event.getTestId(),
                 event.getTestItemId(),
-                event.getOrderNumber(),
+                event.getIndex(),
                 event.getTestItemScore(),
                 event.getTopicId(),
                 event.getCourseId());
