@@ -99,27 +99,42 @@ public class TestProgressServiceImpl implements TestProgressService {
     public TestResultRs finishTest(@NonNull final TestItemUserResolvedRq rq) {
         log.info("Attempting to finish test with request: {}", rq);
 
-        TestProgress testProgress = testProgressRepository
-                .findById(rq.getTestItemResolvedRq().getTestId())
+        TestsResult testsResult = testsResultRepository
+                .findByUserIdAndTopicId(rq.getUserId(), rq.getTestItemResolvedRq().getTopicId())
                 .orElseThrow(() -> new NotFoundException(
-                        "TestProgress with id: " + rq.getTestItemResolvedRq().getTestId() + " not found",
+                        "TestsResult for userId: " + rq.getUserId() + " and topicId: "
+                                + rq.getTestItemResolvedRq().getTopicId() + " not found",
                         ENTITY_NOT_FOUND_ERROR)
                 );
 
-        TestItemResult testItemResult = testItemResultMapper.toTestItemResult(rq, testProgress);
-        testProgress.getTestItemResults().add(testItemResult);
+        TestProgress testProgress = testsResult.getTestProgresses().stream()
+                .filter(tp -> tp.getTestId().equals(rq.getTestItemResolvedRq().getTestId()))
+                .findFirst()
+                .orElse(null);
 
-        if (testProgress.getTestItemResults().size() != MAX_NUMBER_OF_TEST_ITEMS) {
-            throw new IllegalStateException("Cannot finish test before answering all test items");
+        TestItemResult testItemResult = testItemResultMapper.toTestItemResult(rq, testProgress);
+        if (testProgress != null) {
+            testProgress.getTestItemResults().add(testItemResult);
+            if (testProgress.getTestItemResults().size() != MAX_NUMBER_OF_TEST_ITEMS) {
+                throw new IllegalStateException("Cannot finish test before answering all questions");
+            }
+            testProgress.updateScore();
+            testProgress.setStatus(TestStatus.COMPLETED);
         }
 
-        testProgress.updateScore();
-        testProgress.setStatus(TestStatus.COMPLETED);
+        testsResult.setBestScore(calculateBestScore(testsResult));
 
         TestResultRs rs = testProgressMapper.toTestResultRs(testProgress);
 
-        log.info("Test with id: {} was finished with result: {}", testProgress.getTestId(), rs);
+        log.info("Test with id: {} was finished with result: {}", rs.getTestId(), rs.getScore());
         return rs;
+    }
+
+    private Double calculateBestScore(TestsResult testsResult) {
+        return testsResult.getTestProgresses().stream()
+                .mapToDouble(TestProgress::getScore)
+                .max()
+                .orElse(0.0);
     }
 
     @Override
