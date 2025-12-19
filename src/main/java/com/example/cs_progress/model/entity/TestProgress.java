@@ -43,9 +43,6 @@ public class TestProgress extends IdentifiableEntity {
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private TestStatus status = TestStatus.ACTIVE;
-//
-//    @Column(name = "current_test_item_index")
-//    private Integer currentTestItemIndex;
 
     @Column(name = "score")
     @Builder.Default
@@ -54,11 +51,6 @@ public class TestProgress extends IdentifiableEntity {
     @OneToMany(mappedBy = "testProgress", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
     private List<TestItemResult> testItemResults = new ArrayList<>();
-
-//    private void addTestItemResult(TestItemResult testItemResult) {
-//        testItemResults.add(testItemResult);
-//        testItemResult.setTestProgress(this);
-//    }
 
     public void updateScore() {
         this.score = testItemResults == null ? 0.0 :
