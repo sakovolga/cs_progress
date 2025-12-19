@@ -27,8 +27,7 @@ import static com.example.cs_common.exception.error.SystemError.ENTITY_NOT_FOUND
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
-public class TestProgressServiceImpl implements TestProgressService {
+public class TestProgressServiceImpl extends BaseService implements TestProgressService  {
 
     private final TestsResultRepository testsResultRepository;
     private final TestProgressRepository testProgressRepository;

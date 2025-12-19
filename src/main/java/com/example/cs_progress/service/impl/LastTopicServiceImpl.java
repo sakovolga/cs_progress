@@ -7,14 +7,12 @@ import com.example.cs_progress.repository.LastTopicRepository;
 import com.example.cs_progress.service.LastTopicService;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
-public class LastTopicServiceImpl implements LastTopicService {
+public class LastTopicServiceImpl extends BaseService implements LastTopicService {
 
     private final LastTopicRepository lastTopicRepository;
     private final LastTopicMapper lastTopicMapper;

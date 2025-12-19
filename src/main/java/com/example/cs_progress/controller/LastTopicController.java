@@ -12,8 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/topic")
-@Slf4j
-public class LastTopicController {
+public class LastTopicController extends BaseController{
 
     private final LastTopicService lastTopicService;
 
@@ -24,6 +23,5 @@ public class LastTopicController {
 
         return lastTopicService.get(id);
     }
-
 
 }
