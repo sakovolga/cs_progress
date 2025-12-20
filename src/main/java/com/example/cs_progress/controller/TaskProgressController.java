@@ -1,6 +1,7 @@
 package com.example.cs_progress.controller;
 
 import com.example.cs_common.dto.response.TaskProgressListRs;
+import com.example.cs_common.util.BaseController;
 import com.example.cs_progress.service.TaskProgressService;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/task-progress")
-public class TaskProgressController extends BaseController{
+public class TaskProgressController extends BaseController {
 
     private final TaskProgressService taskProgressService;
 

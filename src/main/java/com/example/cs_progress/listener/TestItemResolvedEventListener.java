@@ -2,23 +2,22 @@ package com.example.cs_progress.listener;
 
 import com.example.cs_common.dto.event.TestItemResolvedEvent;
 import com.example.cs_common.exception.NotFoundException;
+import com.example.cs_common.util.BaseListener;
 import com.example.cs_progress.service.TestProgressService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
-public class TestItemResolvedEventListener {
+public class TestItemResolvedEventListener extends BaseListener {
 
     private final TestProgressService testProgressService;
 
     @RabbitListener(queues = "test.item.resolved.queue")
     public void handleTestItemResolved(@Payload TestItemResolvedEvent event) {
-        log.info("🎯 Received test item resolved event: " +
+        log.info("Received test item resolved event: " +
                         "userId={}, testId={}, testItemId={}, index={}, score={}, topicId= {}, courseId= {}",
                 event.getUserId(),
                 event.getTestId(),
@@ -31,21 +30,21 @@ public class TestItemResolvedEventListener {
         try {
             validateEvent(event);
             testProgressService.processResolvedTestItem(event);
-            log.info("✅ Successfully processed test item resolved event for testId={}",
+            log.info("Successfully processed test item resolved event for testId={}",
                     event.getTestId());
 
         } catch (IllegalArgumentException e) {
-            log.error("❌ Invalid test item resolved event: {}", e.getMessage());
+            log.error("Invalid test item resolved event: {}", e.getMessage());
             // Не пробрасываем - сообщение будет acknowledge и удалено
 
         } catch (NotFoundException e) {
-            log.warn("⚠️ TestProgress not found for testId: {}. Event will be acknowledged.",
+            log.warn("TestProgress not found for testId: {}. Event will be acknowledged.",
                     event.getTestId());
             // Не пробрасываем - нет смысла retry
-            log.debug("   Event details: {}", event);
+            log.info("Event details: {}", event);
 
         } catch (Exception e) {
-            log.error("❌ Failed to process test item resolved event", e);
+            log.error("Failed to process test item resolved event", e);
             throw e; // Retry для других ошибок
         }
     }

@@ -23,7 +23,7 @@ public class RabbitMQConfig {
     public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
             ConnectionFactory connectionFactory,
             RetryOperationsInterceptor retryInterceptor,
-            MessageConverter messageConverter) {  // ← ДОБАВЬТЕ ЭТОТ ПАРАМЕТР
+            MessageConverter messageConverter) {
 
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
         factory.setConnectionFactory(connectionFactory);
@@ -33,7 +33,7 @@ public class RabbitMQConfig {
         // 3. КРИТИЧЕСКИ ВАЖНО: установите MessageConverter!
         factory.setMessageConverter(messageConverter);
 
-        log.info("✅ RabbitListenerContainerFactory configured with MessageConverter: {}",
+        log.info("RabbitListenerContainerFactory configured with MessageConverter: {}",
                 messageConverter.getClass().getSimpleName());
 
         return factory;

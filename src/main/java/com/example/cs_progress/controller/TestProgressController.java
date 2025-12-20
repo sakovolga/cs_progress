@@ -3,6 +3,7 @@ package com.example.cs_progress.controller;
 import com.example.cs_common.dto.request.TestItemUserResolvedRq;
 import com.example.cs_common.dto.response.CurrentTestInfoRs;
 import com.example.cs_common.dto.response.TestResultRs;
+import com.example.cs_common.util.BaseController;
 import com.example.cs_progress.service.TestProgressService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
