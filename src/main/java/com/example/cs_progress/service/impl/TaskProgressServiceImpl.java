@@ -2,6 +2,7 @@ package com.example.cs_progress.service.impl;
 
 import com.example.cs_common.dto.response.TaskProgressListRs;
 import com.example.cs_common.dto.response.TaskProgressSummaryRs;
+import com.example.cs_common.util.BaseService;
 import com.example.cs_progress.repository.TaskProgressRepository;
 import com.example.cs_progress.service.TaskProgressService;
 import lombok.NonNull;

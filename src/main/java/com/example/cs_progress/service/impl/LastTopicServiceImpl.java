@@ -2,6 +2,7 @@ package com.example.cs_progress.service.impl;
 
 import com.example.cs_common.dto.event.LessonViewedEvent;
 import com.example.cs_common.dto.key.LastTopicId;
+import com.example.cs_common.util.BaseService;
 import com.example.cs_progress.mapper.LastTopicMapper;
 import com.example.cs_progress.repository.LastTopicRepository;
 import com.example.cs_progress.service.LastTopicService;

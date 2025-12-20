@@ -2,16 +2,15 @@ package com.example.cs_progress.mapper.impl;
 
 import com.example.cs_common.dto.event.TestItemResolvedEvent;
 import com.example.cs_common.dto.request.TestItemUserResolvedRq;
+import com.example.cs_common.util.BaseMapper;
 import com.example.cs_progress.mapper.TestItemResultMapper;
 import com.example.cs_progress.model.entity.TestItemResult;
 import com.example.cs_progress.model.entity.TestProgress;
 import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 @Component
-@Slf4j
-public class TestItemResultMapperImpl implements TestItemResultMapper {
+public class TestItemResultMapperImpl extends BaseMapper implements TestItemResultMapper {
 
     @Override
     public TestItemResult toTestItemResult(@NonNull final TestItemUserResolvedRq rq,

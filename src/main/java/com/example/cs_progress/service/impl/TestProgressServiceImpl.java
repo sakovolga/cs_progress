@@ -6,17 +6,16 @@ import com.example.cs_common.dto.response.CurrentTestInfoRs;
 import com.example.cs_common.dto.response.TestResultRs;
 import com.example.cs_common.enums.TestStatus;
 import com.example.cs_common.exception.NotFoundException;
+import com.example.cs_common.util.BaseService;
 import com.example.cs_progress.mapper.TestItemResultMapper;
 import com.example.cs_progress.mapper.TestProgressMapper;
 import com.example.cs_progress.model.entity.TestItemResult;
 import com.example.cs_progress.model.entity.TestProgress;
 import com.example.cs_progress.model.entity.TestsResult;
-import com.example.cs_progress.repository.TestProgressRepository;
 import com.example.cs_progress.repository.TestsResultRepository;
 import com.example.cs_progress.service.TestProgressService;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +29,7 @@ import static com.example.cs_common.exception.error.SystemError.ENTITY_NOT_FOUND
 public class TestProgressServiceImpl extends BaseService implements TestProgressService  {
 
     private final TestsResultRepository testsResultRepository;
-    private final TestProgressRepository testProgressRepository;
+//    private final TestProgressRepository testProgressRepository;
     private final TestItemResultMapper testItemResultMapper;
     private final TestProgressMapper testProgressMapper;
 
