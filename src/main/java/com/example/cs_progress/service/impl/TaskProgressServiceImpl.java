@@ -1,5 +1,6 @@
 package com.example.cs_progress.service.impl;
 
+import com.example.cs_common.dto.response.TaskProgressDetailsRs;
 import com.example.cs_common.dto.response.TaskProgressListRs;
 import com.example.cs_common.dto.response.TaskProgressSummaryRs;
 import com.example.cs_common.util.BaseService;
@@ -34,4 +35,16 @@ public class TaskProgressServiceImpl extends BaseService implements TaskProgress
         );
         return taskProgressListRs;
     }
+
+    @Override
+    public TaskProgressDetailsRs getTaskProgressDetails(@NonNull final String userId,
+                                                        @NonNull final String taskId) {
+        log.info("Attempting to get task progress details for userId: {} and taskId: {}", userId, taskId);
+
+        TaskProgressDetailsRs rs = taskProgressRepository.findByUserIdAndTaskId(userId, taskId);
+
+        log.info("Task progress details received for userId: {} and taskId: {}", userId, taskId);
+        return rs;
+    }
+
 }
