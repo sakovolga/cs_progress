@@ -1,6 +1,6 @@
 package com.example.cs_progress.controller;
 
-import com.example.cs_common.dto.request.TaskProgressAutosaveRq;
+import com.example.cs_common.dto.request.CodeSnapshotRq;
 import com.example.cs_common.dto.response.TaskProgressAutosaveRs;
 import com.example.cs_common.dto.response.TaskProgressDetailsRs;
 import com.example.cs_common.dto.response.TaskProgressListRs;
@@ -8,7 +8,6 @@ import com.example.cs_common.util.BaseController;
 import com.example.cs_progress.service.TaskProgressService;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -41,7 +40,7 @@ public class TaskProgressController extends BaseController {
     }
 
     @PostMapping("/autosave")
-    public TaskProgressAutosaveRs autosaveTaskProgress(@RequestBody TaskProgressAutosaveRq rq) {
+    public TaskProgressAutosaveRs autosaveTaskProgress(@RequestBody CodeSnapshotRq rq) {
         log.info("Request autosaveTaskProgress: {}", rq.getTaskProgressId());
 
         return taskProgressService.autosave(rq);

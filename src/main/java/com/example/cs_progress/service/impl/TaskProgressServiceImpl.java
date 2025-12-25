@@ -1,6 +1,6 @@
 package com.example.cs_progress.service.impl;
 
-import com.example.cs_common.dto.request.TaskProgressAutosaveRq;
+import com.example.cs_common.dto.request.CodeSnapshotRq;
 import com.example.cs_common.dto.response.TaskProgressAutosaveRs;
 import com.example.cs_common.dto.response.TaskProgressDetailsRs;
 import com.example.cs_common.dto.response.TaskProgressListRs;
@@ -9,7 +9,6 @@ import com.example.cs_common.enums.TaskStatus;
 import com.example.cs_common.exception.NotFoundException;
 import com.example.cs_common.util.BaseService;
 import com.example.cs_progress.mapper.TaskProgressMapper;
-import com.example.cs_progress.mapper.TestProgressMapper;
 import com.example.cs_progress.model.entity.TaskProgress;
 import com.example.cs_progress.repository.TaskProgressRepository;
 import com.example.cs_progress.service.TaskProgressService;
@@ -73,7 +72,7 @@ public class TaskProgressServiceImpl extends BaseService implements TaskProgress
 
     @Override
     @Transactional
-    public TaskProgressAutosaveRs autosave(@NonNull final TaskProgressAutosaveRq rq) {
+    public TaskProgressAutosaveRs autosave(final CodeSnapshotRq rq) {
         log.info("Attempting to autosave task progress with id: {}", rq.getTaskProgressId());
 
         TaskProgress taskProgress = taskProgressRepository.findById(rq.getTaskProgressId()).orElseThrow(
