@@ -1,6 +1,6 @@
 package com.example.cs_progress.mapper.impl;
 
-import com.example.cs_common.dto.request.TaskProgressAutosaveRq;
+import com.example.cs_common.dto.request.CodeSnapshotRq;
 import com.example.cs_common.dto.response.TaskProgressAutosaveRs;
 import com.example.cs_common.dto.response.TaskProgressDetailsRs;
 import com.example.cs_common.enums.TaskStatus;
@@ -29,7 +29,7 @@ public class TaskProgressMapperImpl extends BaseMapper implements TaskProgressMa
     }
 
     @Override
-    public TaskProgress toTaskProgress(@NonNull final TaskProgressAutosaveRq rq,
+    public TaskProgress toTaskProgress(@NonNull final CodeSnapshotRq rq,
                                        @NonNull final TaskProgress taskProgress) {
         log.info("Mapping TaskProgressAutosaveRq to existing TaskProgress with id: {}", taskProgress.getId());
 
