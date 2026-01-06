@@ -44,7 +44,7 @@ public class TaskProgress  extends IdentifiableEntity{
     @Builder.Default
     private Double score = 0.0;
 
-    @Column(name = "last_snapshot")
+    @Column(name = "last_snapshot", columnDefinition = "TEXT")
     private String lastSnapshot;
 
     @Column(name = "code_quality_rating")
