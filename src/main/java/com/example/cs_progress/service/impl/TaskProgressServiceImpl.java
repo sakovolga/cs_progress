@@ -1,5 +1,6 @@
 package com.example.cs_progress.service.impl;
 
+import com.example.cs_common.dto.event.TaskCompletedEvent;
 import com.example.cs_common.dto.request.CodeSnapshotRq;
 import com.example.cs_common.dto.response.TaskProgressAutosaveRs;
 import com.example.cs_common.dto.response.TaskProgressDetailsRs;
@@ -85,6 +86,26 @@ public class TaskProgressServiceImpl extends BaseService implements TaskProgress
 
         log.info("Task progress with id: {} successfully autosaved at {}", rs.taskProgressId(), rs.savedAt());
         return rs;
+    }
+
+    @Override
+    public void updateStatusAndRating(@NonNull final TaskCompletedEvent event) {
+        log.info("Attempting to update status and rating for task progress with id: {}",
+                event.getTaskProgressId());
+
+        TaskProgress taskProgress = taskProgressRepository.findById(event.getTaskProgressId()).orElseThrow(
+                () -> new NotFoundException("TaskProgress not found with id: " + event.getTaskProgressId(),
+                        ENTITY_NOT_FOUND_ERROR)
+        );
+
+        taskProgress.setTaskStatus(event.getTaskStatus());
+        taskProgress.setCodeQualityRating(event.getCodeQualityRating());
+
+        taskProgressRepository.save(taskProgress);
+
+        log.info("Task progress with id: {} successfully updated to status: {} and rating: {}",
+                event.getTaskProgressId(), event.getTaskStatus(), event.getCodeQualityRating());
+
     }
 
 }
