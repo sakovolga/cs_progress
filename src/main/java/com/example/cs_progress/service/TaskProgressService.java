@@ -1,5 +1,6 @@
 package com.example.cs_progress.service;
 
+import com.example.cs_common.dto.event.TaskCompletedEvent;
 import com.example.cs_common.dto.request.CodeSnapshotRq;
 import com.example.cs_common.dto.response.TaskProgressAutosaveRs;
 import com.example.cs_common.dto.response.TaskProgressDetailsRs;
@@ -12,4 +13,6 @@ public interface TaskProgressService {
     TaskProgressDetailsRs getTaskProgressDetails(String userId, String taskId, String topicId);
 
     TaskProgressAutosaveRs autosave(CodeSnapshotRq rq);
+
+    void updateStatusAndRating(TaskCompletedEvent event);
 }
