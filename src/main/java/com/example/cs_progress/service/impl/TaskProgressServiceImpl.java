@@ -1,11 +1,14 @@
 package com.example.cs_progress.service.impl;
 
+import com.example.cs_common.dto.event.SnapshotSentEvent;
 import com.example.cs_common.dto.event.TaskCompletedEvent;
 import com.example.cs_common.dto.request.CodeSnapshotRq;
 import com.example.cs_common.dto.response.TaskProgressAutosaveRs;
 import com.example.cs_common.dto.response.TaskProgressDetailsRs;
 import com.example.cs_common.dto.response.TaskProgressListRs;
 import com.example.cs_common.dto.response.TaskProgressSummaryRs;
+import com.example.cs_common.dto.response.TaskStatusRs;
+import com.example.cs_common.enums.CodeQualityRating;
 import com.example.cs_common.enums.TaskStatus;
 import com.example.cs_common.exception.NotFoundException;
 import com.example.cs_common.util.BaseService;
@@ -89,6 +92,23 @@ public class TaskProgressServiceImpl extends BaseService implements TaskProgress
     }
 
     @Override
+    @Transactional
+    public void saveSnapshot(@NonNull final SnapshotSentEvent event){
+        log.info("Attempting to save snapshot for task progress with id: {}",
+                event.getTaskProgressId());
+
+        TaskProgress taskProgress = taskProgressRepository.findById(event.getTaskProgressId()).orElseThrow(
+                () -> new NotFoundException("TaskProgress not found with id: " + event.getTaskProgressId(),
+                        ENTITY_NOT_FOUND_ERROR)
+        );
+
+        taskProgress.setLastSnapshot(event.getLastSnapshot());
+        taskProgressRepository.save(taskProgress);
+
+        log.info("Snapshot for task progress with id: {} successfully saved", taskProgress.getId());
+    }
+
+    @Override
     public void updateStatusAndRating(@NonNull final TaskCompletedEvent event) {
         log.info("Attempting to update status and rating for task progress with id: {}",
                 event.getTaskProgressId());
@@ -99,13 +119,34 @@ public class TaskProgressServiceImpl extends BaseService implements TaskProgress
         );
 
         taskProgress.setTaskStatus(event.getTaskStatus());
-        taskProgress.setCodeQualityRating(event.getCodeQualityRating());
 
+        CodeQualityRating current = taskProgress.getCodeQualityRating();
+        CodeQualityRating incoming = event.getCodeQualityRating();
+
+        if (current == null || current == CodeQualityRating.NEEDS_IMPROVEMENT) {
+            taskProgress.setCodeQualityRating(incoming);
+        } else if (current == CodeQualityRating.GOOD &&
+                incoming == CodeQualityRating.EXCELLENT) {
+            taskProgress.setCodeQualityRating(incoming);
+        }
         taskProgressRepository.save(taskProgress);
 
         log.info("Task progress with id: {} successfully updated to status: {} and rating: {}",
                 event.getTaskProgressId(), event.getTaskStatus(), event.getCodeQualityRating());
 
+    }
+
+    @Override
+    public TaskStatusRs getTaskStatus(@NonNull final String taskProgressId) {
+        log.info("Attempting to get task status for task progress id: {}", taskProgressId);
+
+        TaskStatusRs taskStatusRs = taskProgressRepository.findStatusByTaskProgressId(taskProgressId)
+                .orElseThrow(() -> new NotFoundException("TaskProgress not found with id: " + taskProgressId,
+                        ENTITY_NOT_FOUND_ERROR));
+
+        log.info("Task status: {} and codeQualityRating: {} received for taskProgressId: {}",
+                taskStatusRs.taskStatus(), taskStatusRs.codeQualityRating(), taskProgressId);
+        return taskStatusRs;
     }
 
 }

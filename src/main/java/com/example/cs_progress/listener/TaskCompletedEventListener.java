@@ -29,7 +29,7 @@ public class TaskCompletedEventListener extends BaseListener {
             log.error("Invalid task completed event: {}", e.getMessage());
 
         } catch (Exception e) {
-            log.error("Failed to task completed viewed event", e);
+            log.error("Failed to task completed event", e);
             throw e;
         }
     }
