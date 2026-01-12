@@ -25,18 +25,9 @@ public class TestItemResult extends IdentifiableEntity{
     @JoinColumn(name = "test_progress_id", referencedColumnName = "id")
     private TestProgress testProgress;
 
-//    @Column(name = "user_id", nullable = false)
-//    private String userId;
-
     @Column(name = "test_item_id", nullable = false)
     private String testItemId;
 
     @Column(name = "score", nullable = false)
     private Double score;
-//
-//    @Column(name = "course_id", nullable = false)
-//    private String courseId;
-//
-//    @Column(name = "topic_id", nullable = false)
-//    private String topicId;
 }
