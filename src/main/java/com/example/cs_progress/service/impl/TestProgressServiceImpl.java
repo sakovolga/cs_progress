@@ -190,7 +190,6 @@ public class TestProgressServiceImpl extends BaseService implements TestProgress
                     testItemResult.getTestItemId(), testProgress.getTestId());
         }
 
-
         log.info("TestItemResolvedEvent processed successfully: TestsResultId={}", testsResult.getId());
     }
 

@@ -35,10 +35,11 @@ public class TaskProgressController extends BaseController {
     @GetMapping
     public TaskProgressDetailsRs getTaskProgressDetails(@RequestParam @NotBlank String userId,
                                                         @RequestParam @NotBlank String taskId,
-                                                        @RequestParam @NotBlank String topicId) {
+                                                        @RequestParam @NotBlank String topicId,
+                                                        @RequestParam @NotBlank String courseId) {
         log.info("Request getTaskProgressDetailsRs for userId: {} and taskId: {}", userId, taskId);
 
-        return taskProgressService.getTaskProgressDetails(userId, taskId, topicId);
+        return taskProgressService.getTaskProgressDetails(userId, taskId, topicId, courseId);
     }
 
     @PostMapping("/autosave")

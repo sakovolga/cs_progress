@@ -35,6 +35,9 @@ public class TaskProgress  extends IdentifiableEntity{
     @Column(name = "topic_id", nullable = false)
     private String topicId;
 
+    @Column(name = "course_id", nullable = false)
+    private String courseId;
+
     @Column(name = "task_status", nullable = false)
     @Enumerated(EnumType.STRING)
     @Builder.Default

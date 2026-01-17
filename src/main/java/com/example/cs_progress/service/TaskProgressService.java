@@ -12,7 +12,7 @@ public interface TaskProgressService {
 
     TaskProgressListRs getTaskProgressList(String userId, String topicId);
 
-    TaskProgressDetailsRs getTaskProgressDetails(String userId, String taskId, String topicId);
+    TaskProgressDetailsRs getTaskProgressDetails(String userId, String taskId, String topicId, String courseId);
 
     TaskProgressAutosaveRs autosave(CodeSnapshotRq rq);
 
