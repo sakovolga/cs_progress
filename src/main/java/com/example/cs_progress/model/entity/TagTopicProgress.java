@@ -19,14 +19,13 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "tag_topic_progress",
+@Table(name = "tag_topic_progresses",
         uniqueConstraints = @UniqueConstraint(columnNames = {"tag_progress_id", "topic_id"}),
         indexes = {
                 @Index(name = "idx_topic_id", columnList = "topic_id"),
                 @Index(name = "idx_tag_progress_topic", columnList = "tag_progress_id, topic_id")
         })
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -37,6 +36,7 @@ public class TagTopicProgress extends IdentifiableEntity {
     private TagProgress tagProgress;
 
     @Column(name = "topic_id", nullable = false)
+    @Setter
     private String topicId;
 
     // ========== ТЕСТЫ (без "ожидаемого") ==========
@@ -45,9 +45,9 @@ public class TagTopicProgress extends IdentifiableEntity {
     @Builder.Default
     private Integer testQuestionsAnswered = 0;   // сколько вопросов ответил
 
-    @Column(name = "test_questions_correct")
+    @Column(name = "correct_test_answers")
     @Builder.Default
-    private Integer testQuestionsCorrect = 0;    // сколько правильно
+    private Integer correctTestAnswers = 0;    // сколько правильно
 
     @Column(name = "test_success_rate")
     @Builder.Default
@@ -60,6 +60,7 @@ public class TagTopicProgress extends IdentifiableEntity {
     private Integer tasksCompleted = 0;
 
     @Column(name = "expected_tasks")
+    @Setter
     private Integer expectedTasks;               // ✅ Есть expected
 
     @Column(name = "task_completion_rate")
@@ -95,53 +96,72 @@ public class TagTopicProgress extends IdentifiableEntity {
 
     // ========== Бизнес-методы ==========
 
-    public void updateFromTestResult(int totalQuestions, int correctAnswers) {
-        this.testQuestionsAnswered += totalQuestions;
-        this.testQuestionsCorrect += correctAnswers;
-        recalculateMetrics();
+    public void incrementCorrectTestAnswers() {
+        this.testQuestionsAnswered++;
+        this.correctTestAnswers++;
+        recalculateTestMetrics();
+
     }
 
-    public void incrementTaskCompleted() {
-        this.tasksCompleted++;
-        recalculateMetrics();
+    public void incrementQuestionsAnswered() {
+        this.testQuestionsAnswered++;
     }
 
-    public void setExpectedTasksIfNull(Integer expected) {
-        if (this.expectedTasks == null) {
-            this.expectedTasks = expected;
-            recalculateMetrics();
-        }
-    }
-
-    public void recalculateMetrics() {
+    private void recalculateTestMetrics() {
         this.testSuccessRate = testQuestionsAnswered > 0
-                ? (double) testQuestionsCorrect / testQuestionsAnswered
+                ? (double) correctTestAnswers / testQuestionsAnswered * 100
                 : 0.0;
-
-        this.taskCompletionRate = expectedTasks != null && expectedTasks > 0
-                ? (double) tasksCompleted / expectedTasks
-                : 0.0;
-
-        this.progressInTopic = calculateOverallProgress();
+        calculateOverallProgress();
     }
 
-    private Double calculateOverallProgress() {
+
+
+
+
+//    public void updateFromTestResult(int totalQuestions, int correctAnswers) {
+//        this.testQuestionsAnswered += totalQuestions;
+//        this.testQuestionsCorrect += correctAnswers;
+//        recalculateMetrics();
+//    }
+
+//    public void incrementTaskCompleted() {
+//        this.tasksCompleted++;
+//        recalculateMetrics();
+//    }
+//
+//    public void setExpectedTasksIfNull(Integer expected) {
+//        if (this.expectedTasks == null) {
+//            this.expectedTasks = expected;
+//            recalculateMetrics();
+//        }
+//    }
+
+//    public void recalculateMetrics() {
+//        this.testSuccessRate = testQuestionsAnswered > 0
+//                ? (double) testQuestionsCorrect / testQuestionsAnswered
+//                : 0.0;
+//
+//        this.taskCompletionRate = expectedTasks != null && expectedTasks > 0
+//                ? (double) tasksCompleted / expectedTasks
+//                : 0.0;
+//
+//        this.progressInTopic = calculateOverallProgress();
+//    }
+
+    private void calculateOverallProgress() {
         boolean hasTestData = testQuestionsAnswered > 0;
         boolean hasTaskData = expectedTasks != null && expectedTasks > 0;
 
         if (hasTestData && hasTaskData) {
-            return (testSuccessRate * 0.5) + (taskCompletionRate * 0.5);
+            progressInTopic = testSuccessRate * 0.5
+                    + taskCompletionRate * 0.5;
+        } else if (hasTestData) {
+            progressInTopic = testSuccessRate;
+        } else if (hasTaskData) {
+            progressInTopic = taskCompletionRate;
+        } else {
+            progressInTopic = 0.0;
         }
-
-        if (hasTestData) {
-            return testSuccessRate;
-        }
-
-        if (hasTaskData) {
-            return taskCompletionRate;
-        }
-
-        return 0.0;
     }
 
     public boolean isTopicCompleted() {

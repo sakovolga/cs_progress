@@ -53,7 +53,8 @@ public class TaskProgressServiceImpl extends BaseService implements TaskProgress
     @Override
     public TaskProgressDetailsRs getTaskProgressDetails(@NonNull final String userId,
                                                         @NonNull final String taskId,
-                                                        @NonNull final String topicId) {
+                                                        @NonNull final String topicId,
+                                                        @NonNull final String courseId) {
         log.info("Attempting to get task progress details for userId: {} and taskId: {}", userId, taskId);
 
         TaskProgressDetailsRs taskProgressDetailsRs = taskProgressRepository.findByUserIdAndTaskId(userId, taskId);
@@ -64,6 +65,7 @@ public class TaskProgressServiceImpl extends BaseService implements TaskProgress
                     .taskId(taskId)
                     .userId(userId)
                     .topicId(topicId)
+                    .courseId(courseId)
                     .taskStatus(TaskStatus.NOT_STARTED)
                     .build();
             taskProgress = taskProgressRepository.saveAndFlush(taskProgress);
