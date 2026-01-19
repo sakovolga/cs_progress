@@ -27,23 +27,27 @@ public class TagProgressServiceImpl extends BaseService implements TagProgressSe
     private final TagProgressRepository tagProgressRepository;
     private final TagTaskCountRepository tagTaskCountRepository;
 
+    private static final Double MAX_TEST_ITEM_SCORE = 10.0;
+
     @Override
     @Transactional
     public void processTagsFromResolvedTestItem(@NonNull final String courseId,
                                                 @NonNull final String topicId,
                                                 @NonNull final String userId,
                                                 List<String> tagNames,
-                                                final boolean isCorrect) {
+                                                final Double score) {
         log.info(
                 "Processing tag progress after resolving testItem " +
-                        "for userId: {}, courseId: {}, topicId: {}, tags: {}, isCorrect: {}",
-                userId, courseId, topicId, tagNames, isCorrect
+                        "for userId: {}, courseId: {}, topicId: {}, tags: {}, score: {}",
+                userId, courseId, topicId, tagNames, score
         );
 
         if (tagNames == null || tagNames.isEmpty()) {
             log.info("No tags to process for the resolved test item.");
             return;
         }
+
+        boolean isCorrect = isFullyCorrectAnswer(score);
 
         List<TagProgress> existingTagProgresses = tagProgressRepository
                 .findByTagNameInAndUserIdAndCourseId(tagNames, userId, courseId);
@@ -59,6 +63,10 @@ public class TagProgressServiceImpl extends BaseService implements TagProgressSe
         }
 
         log.info("Completed processing tag progress for resolved test item for userId: {}", userId);
+    }
+
+    private boolean isFullyCorrectAnswer(Double score) {
+        return score != null && score.equals(MAX_TEST_ITEM_SCORE);
     }
 
     private void updateTagProgress(@NonNull final TagProgress tagProgress,
