@@ -29,9 +29,9 @@ import static com.example.cs_common.exception.error.SystemError.ENTITY_NOT_FOUND
 public class TestProgressServiceImpl extends BaseService implements TestProgressService  {
 
     private final TestsResultRepository testsResultRepository;
-//    private final TestProgressRepository testProgressRepository;
     private final TestItemResultMapper testItemResultMapper;
     private final TestProgressMapper testProgressMapper;
+    private final AsyncTagProgressHandler asyncTagProgressHandler;
 
     private static final int MAX_NUMBER_OF_TEST = 3;
     private static final int MAX_TEST_ITEM_INDEX = 9;
@@ -123,6 +123,14 @@ public class TestProgressServiceImpl extends BaseService implements TestProgress
         testsResult.setBestScore(calculateBestScore(testsResult));
 
         TestResultRs rs = testProgressMapper.toTestResultRs(testProgress);
+
+        asyncTagProgressHandler.processTagProgressAsync(
+                rq.getTestItemResolvedRq().getCourseId(),
+                rq.getTestItemResolvedRq().getTopicId(),
+                rq.getUserId(),
+                rq.getTestItemResolvedRq().getTagNames(),
+                rq.getTestItemResolvedRq().getTestItemScore()
+        );
 
         log.info("Test with id: {} was finished with result: {}", rs.getTestId(), rs.getScore());
         return rs;
