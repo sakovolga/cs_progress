@@ -8,5 +8,5 @@ public interface TagProgressService {
                                          String topicId,
                                          String userId,
                                          List<String> tagNames,
-                                         boolean isCorrect);
+                                         Double score);
 }
