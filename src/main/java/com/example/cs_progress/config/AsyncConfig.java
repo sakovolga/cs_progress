@@ -18,6 +18,8 @@ public class AsyncConfig implements AsyncConfigurer {
 
     @Bean(name = "taskExecutor")
     public Executor taskExecutor() {
+        log.info("Creating taskExecutor for @Async");
+
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(5);
         executor.setMaxPoolSize(10);
@@ -27,13 +29,17 @@ public class AsyncConfig implements AsyncConfigurer {
         executor.setWaitForTasksToCompleteOnShutdown(true);
         executor.setAwaitTerminationSeconds(60);
         executor.initialize();
+
+        log.info("taskExecutor created successfully");
         return executor;
     }
 
     @Override
     public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
         return (ex, method, params) -> {
-            log.error("Async method {} threw uncaught exception", method.getName(), ex);
+            log.error("===== ASYNC UNCAUGHT EXCEPTION =====");
+            log.error("Method: {}", method.getName());
+            log.error("Exception: ", ex);
         };
     }
 }
