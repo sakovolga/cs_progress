@@ -1,6 +1,5 @@
 package com.example.cs_progress.service.impl;
 
-import com.example.cs_common.exception.NotFoundException;
 import com.example.cs_common.util.BaseService;
 import com.example.cs_progress.model.entity.TagProgress;
 import com.example.cs_progress.model.entity.TagTaskCount;
@@ -17,8 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import static com.example.cs_common.exception.error.SystemError.ENTITY_NOT_FOUND_ERROR;
 
 @Service
 @RequiredArgsConstructor
@@ -122,9 +119,10 @@ public class TagProgressServiceImpl extends BaseService implements TagProgressSe
                 tagName, topicId, courseId);
 
         TagTaskCount expectedTaskCount = tagTaskCountRepository.findByTagName(tagName)
-                .orElseThrow(() -> new NotFoundException(
-                        "Expected task count not found for tag: " + tagName, ENTITY_NOT_FOUND_ERROR
-                ));
+                .orElse(TagTaskCount.builder()
+                        .tagName(tagName)
+                        .courseId(courseId)
+                        .build());
 
         TagProgress tagProgress = TagProgress.builder()
                 .tagName(tagName)
@@ -133,20 +131,22 @@ public class TagProgressServiceImpl extends BaseService implements TagProgressSe
                 .totalTasks(expectedTaskCount.getCount())
                 .build();
 
-        for (TagTaskTopicCount tagTaskTopicCount : expectedTaskCount.getTopicCounts()) {
-            TagTopicProgress tagTopicProgress = TagTopicProgress.builder()
-                    .topicId(tagTaskTopicCount.getTopicId())
-                    .expectedTasks(tagTaskTopicCount.getCount())
-                    .tagProgress(tagProgress)
-                    .build();
-            if (topicId.equals(tagTaskTopicCount.getTopicId())) {
-                if (isCorrect) {
-                    tagTopicProgress.incrementCorrectTestAnswers();
-                } else {
-                    tagTopicProgress.incrementQuestionsAnswered();
+        if(expectedTaskCount.getCount() > 0) {
+            for (TagTaskTopicCount tagTaskTopicCount : expectedTaskCount.getTopicCounts()) {
+                TagTopicProgress tagTopicProgress = TagTopicProgress.builder()
+                        .topicId(tagTaskTopicCount.getTopicId())
+                        .expectedTasks(tagTaskTopicCount.getCount())
+                        .tagProgress(tagProgress)
+                        .build();
+                if (topicId.equals(tagTaskTopicCount.getTopicId())) {
+                    if (isCorrect) {
+                        tagTopicProgress.incrementCorrectTestAnswers();
+                    } else {
+                        tagTopicProgress.incrementQuestionsAnswered();
+                    }
                 }
+                tagProgress.getTopicProgresses().add(tagTopicProgress);
             }
-            tagProgress.getTopicProgresses().add(tagTopicProgress);
         }
 
         if (isCorrect) {

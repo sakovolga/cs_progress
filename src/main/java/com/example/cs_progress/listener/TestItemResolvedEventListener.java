@@ -50,6 +50,8 @@ public class TestItemResolvedEventListener extends BaseListener {
                 } catch (Exception e) {
                     log.error("Failed to update TagProgress, but TestProgress was saved", e);
                 }
+            } else {
+                log.info("No tags to process for TagProgress update for testItemId={}", event.getTestItemId());
             }
 
             log.info("Successfully processed test item resolved event for testId={}",

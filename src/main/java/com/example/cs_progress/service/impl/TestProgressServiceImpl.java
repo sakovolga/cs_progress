@@ -95,7 +95,8 @@ public class TestProgressServiceImpl extends BaseService implements TestProgress
     @Override
     @Transactional
     public TestResultRs finishTest(@NonNull final TestItemUserResolvedRq rq) {
-        log.info("Attempting to finish test with request: {}", rq);
+        log.info("Finishing test for userId={}, testId={}",
+                rq.getUserId(), rq.getTestItemResolvedRq().getTestId());
 
         TestsResult testsResult = testsResultRepository
                 .findByUserIdAndTopicId(rq.getUserId(), rq.getTestItemResolvedRq().getTopicId())
@@ -132,7 +133,7 @@ public class TestProgressServiceImpl extends BaseService implements TestProgress
                 rq.getTestItemResolvedRq().getTestItemScore()
         );
 
-        log.info("Test with id: {} was finished with result: {}", rs.getTestId(), rs.getScore());
+        log.info("Test finished: testId={}, score={}", rs.getTestId(), rs.getScore());
         return rs;
     }
 

@@ -16,35 +16,33 @@ public class AsyncTagProgressHandler extends BaseService {
 
     private final TagProgressService tagProgressService;
 
-    @Async
+    @Async("taskExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void processTagProgressAsync(String courseId,
                                         String topicId,
                                         String userId,
                                         List<String> tagNames,
                                         Double testItemScore) {
+
         if (tagNames == null || tagNames.isEmpty()) {
             log.debug("No tags to process for userId={}, topicId={}", userId, topicId);
             return;
         }
 
         try {
-            log.debug("Starting async TagProgress processing for userId={}, topicId={}, tags={}",
+            log.info("Processing tags asynchronously for userId={}, topicId={}, tags={}",
                     userId, topicId, tagNames);
 
             tagProgressService.processTagsFromResolvedTestItem(
-                    courseId,
-                    topicId,
-                    userId,
-                    tagNames,
-                    testItemScore
+                    courseId, topicId, userId, tagNames, testItemScore
             );
 
-            log.debug("Completed async TagProgress processing for userId={}", userId);
+            log.info("Tag processing completed for userId={}", userId);
 
         } catch (Exception e) {
-            log.error("Failed to process TagProgress asynchronously for userId={}, topicId={}, tags={}",
-                    userId, topicId, tagNames, e);
+            log.error("Failed to process tags asynchronously for userId={}, topicId={}",
+                    userId, topicId, e);
+            throw new RuntimeException("TagProgress processing failed", e);
         }
     }
 }
