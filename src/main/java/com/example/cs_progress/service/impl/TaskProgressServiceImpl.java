@@ -15,6 +15,7 @@ import com.example.cs_common.util.BaseService;
 import com.example.cs_progress.mapper.TaskProgressMapper;
 import com.example.cs_progress.model.entity.TaskProgress;
 import com.example.cs_progress.repository.TaskProgressRepository;
+import com.example.cs_progress.service.TagProgressService;
 import com.example.cs_progress.service.TaskProgressService;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -31,8 +32,10 @@ public class TaskProgressServiceImpl extends BaseService implements TaskProgress
 
     private final TaskProgressRepository taskProgressRepository;
     private final TaskProgressMapper taskProgressMapper;
+    private final TagProgressService tagProgressService;
 
     @Override
+    @Transactional(readOnly = true)
     public TaskProgressListRs getTaskProgressList(@NonNull final String userId,
                                                   @NonNull final String topicId) {
         log.info("Attempting to get task progress list for userId: {} and topicId: {}", userId, topicId);
@@ -51,6 +54,7 @@ public class TaskProgressServiceImpl extends BaseService implements TaskProgress
     }
 
     @Override
+    @Transactional
     public TaskProgressDetailsRs getTaskProgressDetails(@NonNull final String userId,
                                                         @NonNull final String taskId,
                                                         @NonNull final String topicId,
@@ -111,7 +115,8 @@ public class TaskProgressServiceImpl extends BaseService implements TaskProgress
     }
 
     @Override
-    public void updateStatusAndRating(@NonNull final TaskCompletedEvent event) {
+    @Transactional
+    public void processTaskCompletedEvent(@NonNull final TaskCompletedEvent event) {
         log.info("Attempting to update status and rating for task progress with id: {}",
                 event.getTaskProgressId());
 
@@ -133,12 +138,17 @@ public class TaskProgressServiceImpl extends BaseService implements TaskProgress
         }
         taskProgressRepository.save(taskProgress);
 
+        tagProgressService.processTagsFromCompletedTask(
+                taskProgress.getCourseId(), taskProgress.getTopicId(), taskProgress.getUserId(), event.getTagNames()
+        );
+
         log.info("Task progress with id: {} successfully updated to status: {} and rating: {}",
                 event.getTaskProgressId(), event.getTaskStatus(), event.getCodeQualityRating());
 
     }
 
     @Override
+    @Transactional(readOnly = true)
     public TaskStatusRs getTaskStatus(@NonNull final String taskProgressId) {
         log.info("Attempting to get task status for task progress id: {}", taskProgressId);
 

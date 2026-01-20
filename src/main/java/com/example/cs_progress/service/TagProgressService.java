@@ -9,4 +9,9 @@ public interface TagProgressService {
                                          String userId,
                                          List<String> tagNames,
                                          Double score);
+
+    void processTagsFromCompletedTask(String courseId,
+                                      String topicId,
+                                      String userId,
+                                      List<String> tagNames);
 }

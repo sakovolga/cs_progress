@@ -41,7 +41,7 @@ public class TagProgress extends IdentifiableEntity {
 
     @Builder.Default
     @Column(name = "resolved_tasks")
-    private Integer resolvedTasks = 0; //TODO: не реализовано вычисление
+    private Integer resolvedTasks = 0;
 
     @Column(name = "answered_test_questions")
     @Builder.Default
@@ -121,6 +121,13 @@ public class TagProgress extends IdentifiableEntity {
                 : 0.0;
 
         this.strengthScore = (testScore + taskScore) / 2.0;
+    }
+
+    public void recalculateCompletedTasks() {
+        this.resolvedTasks = topicProgresses.stream()
+                .mapToInt(TagTopicProgress::getTasksCompleted)
+                .sum();
+        recalculateStrengthScore();
     }
 
 

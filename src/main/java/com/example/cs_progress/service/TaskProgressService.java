@@ -18,7 +18,7 @@ public interface TaskProgressService {
 
     void saveSnapshot(SnapshotSentEvent event);
 
-    void updateStatusAndRating(TaskCompletedEvent event);
+    void processTaskCompletedEvent(TaskCompletedEvent event);
 
     TaskStatusRs getTaskStatus(String taskProgressId);
 }

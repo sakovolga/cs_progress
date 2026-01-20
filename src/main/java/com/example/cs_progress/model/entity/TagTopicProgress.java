@@ -105,6 +105,7 @@ public class TagTopicProgress extends IdentifiableEntity {
 
     public void incrementQuestionsAnswered() {
         this.testQuestionsAnswered++;
+        recalculateTestMetrics();
     }
 
     private void recalculateTestMetrics() {
@@ -124,10 +125,17 @@ public class TagTopicProgress extends IdentifiableEntity {
 //        recalculateMetrics();
 //    }
 
-//    public void incrementTaskCompleted() {
-//        this.tasksCompleted++;
-//        recalculateMetrics();
-//    }
+    public void incrementTaskCompleted() {
+        this.tasksCompleted++;
+        recalculateTaskMetrics();
+    }
+
+    private void recalculateTaskMetrics() {
+        this.taskCompletionRate = expectedTasks > 0 ?
+                (double) tasksCompleted / expectedTasks * 100
+                : 0.0;
+        calculateOverallProgress();
+    }
 //
 //    public void setExpectedTasksIfNull(Integer expected) {
 //        if (this.expectedTasks == null) {
@@ -181,21 +189,21 @@ public class TagTopicProgress extends IdentifiableEntity {
         return Math.max(0, expectedTasks - tasksCompleted);
     }
 
-    public String getProgressDescription() {
-        StringBuilder sb = new StringBuilder();
-
-        if (expectedTasks != null && expectedTasks > 0) {
-            sb.append(String.format("%d/%d задач", tasksCompleted, expectedTasks));
-        }
-
-        if (testQuestionsAnswered > 0) {
-            if (sb.length() > 0) sb.append(", ");
-            sb.append(String.format("%d%% правильных ответов",
-                    (int)(testSuccessRate * 100)));
-        }
-
-        return sb.length() > 0 ? sb.toString() : "Нет активности";
-    }
+//    public String getProgressDescription() {
+//        StringBuilder sb = new StringBuilder();
+//
+//        if (expectedTasks != null && expectedTasks > 0) {
+//            sb.append(String.format("%d/%d задач", tasksCompleted, expectedTasks));
+//        }
+//
+//        if (testQuestionsAnswered > 0) {
+//            if (sb.length() > 0) sb.append(", ");
+//            sb.append(String.format("%d%% правильных ответов",
+//                    (int)(testSuccessRate * 100)));
+//        }
+//
+//        return sb.length() > 0 ? sb.toString() : "Нет активности";
+//    }
 
 
 }

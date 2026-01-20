@@ -21,7 +21,7 @@ public class TaskCompletedEventListener extends BaseListener {
 
         try {
             validateEvent(event);
-            taskProgressService.updateStatusAndRating(event);
+            taskProgressService.processTaskCompletedEvent(event);
             log.info("Successfully processed task completed event for taskProgressId: {}",
                     event.getTaskProgressId());
 
