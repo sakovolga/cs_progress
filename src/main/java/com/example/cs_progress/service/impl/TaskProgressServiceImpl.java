@@ -125,6 +125,8 @@ public class TaskProgressServiceImpl extends BaseService implements TaskProgress
                         ENTITY_NOT_FOUND_ERROR)
         );
 
+        TaskStatus previousStatus = taskProgress.getTaskStatus();
+
         taskProgress.setTaskStatus(event.getTaskStatus());
 
         CodeQualityRating current = taskProgress.getCodeQualityRating();
@@ -138,9 +140,11 @@ public class TaskProgressServiceImpl extends BaseService implements TaskProgress
         }
         taskProgressRepository.save(taskProgress);
 
-        tagProgressService.processTagsFromCompletedTask(
-                taskProgress.getCourseId(), taskProgress.getTopicId(), taskProgress.getUserId(), event.getTagNames()
-        );
+        if (!previousStatus.equals(TaskStatus.SOLVED)) {
+            tagProgressService.processTagsFromCompletedTask(
+                    taskProgress.getCourseId(), taskProgress.getTopicId(), taskProgress.getUserId(), event.getTagNames()
+            );
+        }
 
         log.info("Task progress with id: {} successfully updated to status: {} and rating: {}",
                 event.getTaskProgressId(), event.getTaskStatus(), event.getCodeQualityRating());

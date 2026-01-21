@@ -16,8 +16,8 @@ public class TaskCompletedEventListener extends BaseListener {
 
     @RabbitListener(queues = "task.completed.queue")
     public void handleTaskCompletedEvent(@Payload TaskCompletedEvent event) {
-        log.info("Received task completed event: taskProgressId={}, taskStatus={}, codeQualityRating={}",
-                event.getTaskProgressId(), event.getTaskStatus(), event.getCodeQualityRating());
+        log.info("Received task completed event: taskProgressId={}, taskStatus={}, codeQualityRating={}, tags={}",
+                event.getTaskProgressId(), event.getTaskStatus(), event.getCodeQualityRating(), event.getTagNames());
 
         try {
             validateEvent(event);
