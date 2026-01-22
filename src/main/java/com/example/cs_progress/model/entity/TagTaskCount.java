@@ -47,16 +47,5 @@ public class TagTaskCount extends IdentifiableEntity {
                 .sum();
     }
 
-    // ==== Удобные доменные методы ====
-
-    public void addTopicCount(TagTaskTopicCount topicCount) {
-        topicCounts.add(topicCount);
-        topicCount.setTagTaskCount(this);
-    }
-
-    public void removeTopicCount(TagTaskTopicCount topicCount) {
-        topicCounts.remove(topicCount);
-        topicCount.setTagTaskCount(null);
-    }
 }
 
