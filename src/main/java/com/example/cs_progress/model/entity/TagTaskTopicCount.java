@@ -30,5 +30,20 @@ public class TagTaskTopicCount extends IdentifiableEntity {
 
     @Column(name = "count")
     private Integer count;
+
+    public void incrementCount() {
+        if (this.count == null) {
+            this.count = 0;
+        }
+        this.count++;
+    }
+
+    public void decrementCount() {
+        if (this.count == null || this.count <= 0) {
+            this.count = 0;
+        } else {
+            this.count--;
+        }
+    }
 }
 
