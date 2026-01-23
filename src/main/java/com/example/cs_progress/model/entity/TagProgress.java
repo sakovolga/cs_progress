@@ -37,7 +37,7 @@ public class TagProgress extends IdentifiableEntity {
     // ========== Для дашборда (базовые метрики) ==========
 
     @Column(name = "total_tasks")
-    private Integer totalTasks; //TODO: не реализовано вычисление
+    private Integer totalTasks;
 
     @Builder.Default
     @Column(name = "resolved_tasks")

@@ -2,11 +2,13 @@ package com.example.cs_progress.repository;
 
 import com.example.cs_common.enums.TopicStatus;
 import com.example.cs_progress.model.entity.TopicProgress;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,7 +19,14 @@ public interface TopicProgressRepository extends JpaRepository<TopicProgress, St
 
     Optional<TopicProgress> findByUserIdAndTopicId(String userId, String topicId);
 
+    @Cacheable("topic-progress")
     List<TopicProgress> findByUserId(String userId);
+
+    long countByUserIdAndStatusAndUpdatedAtAfter(
+            String userId,
+            TopicStatus status,
+            LocalDateTime after
+    );
 
     List<TopicProgress> findByUserIdAndCourseId(String userId, String courseId);
 

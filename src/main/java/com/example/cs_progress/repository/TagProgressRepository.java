@@ -4,6 +4,7 @@ import com.example.cs_progress.model.entity.TagProgress;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -14,4 +15,8 @@ public interface TagProgressRepository extends JpaRepository<TagProgress, String
                                                           String userId,
                                                           String courseId);
 
+    List<TagProgress> findByUserId(String userId);
+
+    // Для детектора изменений
+    long countByUserIdAndLastActivityAfter(String userId, LocalDateTime after);
 }
