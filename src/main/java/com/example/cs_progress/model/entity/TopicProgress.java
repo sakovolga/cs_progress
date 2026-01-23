@@ -51,18 +51,14 @@ public class TopicProgress extends IdentifiableEntity {
 //    @Column(name = "completed_tests")
 //    @Builder.Default
 //    private Integer completedTests = 0;
-
-    @Column(name = "is_completed")
-    @Builder.Default
-    private Boolean isCompleted = false;
+//
+//    @Column(name = "is_completed")
+//    @Builder.Default
+//    private Boolean isCompleted = false;
 
     @Column(name = "best_test_score_percentage")
     @Builder.Default
     private Double bestTestScorePercentage = 0.0;
-
-//    @Column(name = "avg_test_score")
-//    @Builder.Default
-//    private Double avgTestScore = 0.0;
 
     // ========== Агрегированные данные по задачам ==========
 
@@ -86,7 +82,7 @@ public class TopicProgress extends IdentifiableEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     @Builder.Default
-    private TopicStatus status = TopicStatus.NOT_STARTED;
+    private TopicStatus status = TopicStatus.NOT_STARTED;  // для общего дашборда и сайдбара
 
     // ========== Временные метки ==========
 

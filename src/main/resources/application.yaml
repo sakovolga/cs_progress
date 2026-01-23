@@ -16,6 +16,16 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        
+  ai:
+    openai:
+      enabled: false
+    ollama:
+      enabled: true
+      base-url: http://localhost:11434 # Порт 11434
+      chat:
+        options:
+          model: qwen2.5-coder:7b
   
   # ============= RABBITMQ НАСТРОЙКИ =============
   rabbitmq:
