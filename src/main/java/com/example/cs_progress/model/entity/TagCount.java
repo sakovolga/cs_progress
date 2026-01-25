@@ -15,13 +15,13 @@ import lombok.Setter;
 import java.util.ArrayList;
 import java.util.List;
 @Entity
-@Table(name = "tag_task_counts")
+@Table(name = "tag_counts")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
-public class TagTaskCount extends IdentifiableEntity {
+public class TagCount extends IdentifiableEntity {
 
     @Column(name = "tag_name")
     private String tagName;
@@ -30,12 +30,12 @@ public class TagTaskCount extends IdentifiableEntity {
     private String courseId;
 
     @OneToMany(
-            mappedBy = "tagTaskCount",
+            mappedBy = "tagCount",
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
     @Builder.Default
-    private List<TagTaskTopicCount> topicCounts = new ArrayList<>();
+    private List<TagTopicCount> topicCounts = new ArrayList<>();
 
     /**
      * Производное поле — НЕ хранится в БД
@@ -43,7 +43,7 @@ public class TagTaskCount extends IdentifiableEntity {
     @Transient
     public Integer getCount() {
         return topicCounts.stream()
-                .mapToInt(TagTaskTopicCount::getCount)
+                .mapToInt(TagTopicCount::getCount)
                 .sum();
     }
 
