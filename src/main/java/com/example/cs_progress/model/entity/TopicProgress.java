@@ -63,7 +63,8 @@ public class TopicProgress extends IdentifiableEntity {
     // ========== Агрегированные данные по задачам ==========
 
     @Column(name = "total_tasks")
-    private Integer totalTasks;
+    @Builder.Default
+    private Integer totalTasks = 0;
 
     @Column(name = "completed_tasks")
     @Builder.Default
@@ -107,14 +108,41 @@ public class TopicProgress extends IdentifiableEntity {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        firstActivity = createdAt;
     }
 
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+        lastActivity = updatedAt;
     }
 
     // ========== Бизнес-методы ==========
+
+    public void updateStatus() {
+        if(bestTestScorePercentage >= 70.0 && taskCompletionPercentage >= 25.0) {
+            this.status = TopicStatus.COMPLETED;
+            if (this.completedAt == null) {
+                this.completedAt = LocalDateTime.now();
+            }
+        } else if (bestTestScorePercentage > 0.0 || taskCompletionPercentage > 0.0) {
+            this.status = TopicStatus.IN_PROGRESS;
+            this.completedAt = null;
+        } else {
+            this.status = TopicStatus.NOT_STARTED;
+            this.completedAt = null;
+        }
+    }
+
+    public void incrementCompletedTasks() {
+        this.completedTasks++;
+        if (this.totalTasks != null && this.totalTasks > 0) {
+            this.taskCompletionPercentage = (double) this.completedTasks / this.totalTasks * 100.0;
+        } else {
+            this.taskCompletionPercentage = 0.0;
+        }
+        updateStatus();
+    }
 
     /**
      * Обновить прогресс после прохождения теста

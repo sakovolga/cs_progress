@@ -13,17 +13,17 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "tag_task_topic_counts")
+@Table(name = "tag_topic_counts")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
-public class TagTaskTopicCount extends IdentifiableEntity {
+public class TagTopicCount extends IdentifiableEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "tag_task_count_id", nullable = false)
-    private TagTaskCount tagTaskCount;
+    @JoinColumn(name = "tag_count_id", nullable = false)
+    private TagCount tagCount;
 
     @Column(name = "topic_id")
     private String topicId;

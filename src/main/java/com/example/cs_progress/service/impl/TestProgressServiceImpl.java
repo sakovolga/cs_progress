@@ -12,7 +12,9 @@ import com.example.cs_progress.mapper.TestProgressMapper;
 import com.example.cs_progress.model.entity.TestItemResult;
 import com.example.cs_progress.model.entity.TestProgress;
 import com.example.cs_progress.model.entity.TestsResult;
+import com.example.cs_progress.model.entity.TopicProgress;
 import com.example.cs_progress.repository.TestsResultRepository;
+import com.example.cs_progress.repository.TopicProgressRepository;
 import com.example.cs_progress.service.TestProgressService;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -26,12 +28,13 @@ import static com.example.cs_common.exception.error.SystemError.ENTITY_NOT_FOUND
 
 @Service
 @RequiredArgsConstructor
-public class TestProgressServiceImpl extends BaseService implements TestProgressService  {
+public class TestProgressServiceImpl extends BaseService implements TestProgressService {
 
     private final TestsResultRepository testsResultRepository;
     private final TestItemResultMapper testItemResultMapper;
     private final TestProgressMapper testProgressMapper;
     private final AsyncTagProgressHandler asyncTagProgressHandler;
+    private final TopicProgressRepository topicProgressRepository;
 
     private static final int MAX_NUMBER_OF_TEST = 3;
     private static final int MAX_TEST_ITEM_INDEX = 9;
@@ -121,7 +124,13 @@ public class TestProgressServiceImpl extends BaseService implements TestProgress
             testProgress.setStatus(TestStatus.COMPLETED);
         }
 
-        testsResult.setBestScore(calculateBestScore(testsResult));
+        Double bestScore = calculateBestScore(testsResult);
+        testsResult.setBestScore(bestScore);
+        saveBestScoreToTopicProgress(
+                rq.getUserId(),
+                rq.getTestItemResolvedRq().getCourseId(),
+                rq.getTestItemResolvedRq().getTopicId(),
+                bestScore);
 
         TestResultRs rs = testProgressMapper.toTestResultRs(testProgress);
 
@@ -233,5 +242,25 @@ public class TestProgressServiceImpl extends BaseService implements TestProgress
         return (int) progressList.stream()
                 .filter(testProgress -> testProgress.getStatus().equals(TestStatus.COMPLETED))
                 .count();
+    }
+
+    private void saveBestScoreToTopicProgress(@NonNull final String userId,
+                                              @NonNull final String courseId,
+                                              @NonNull final String topicId,
+                                              @NonNull final Double bestScore) {
+        log.info(
+                "Saving best score to TopicProgress for userId={}, courseId={}, topicId={}, bestScore={}",
+                userId, courseId, topicId, bestScore
+        );
+
+        TopicProgress topicProgress = topicProgressRepository.findByUserIdAndTopicId(userId, topicId)
+                .orElse(TopicProgress.builder()
+                        .userId(userId)
+                        .courseId(courseId)
+                        .topicId(topicId)
+                        .build());
+        topicProgress.setBestTestScorePercentage(bestScore);
+        topicProgress.updateStatus();
+        topicProgressRepository.save(topicProgress);
     }
 }

@@ -2,11 +2,11 @@ package com.example.cs_progress.service.impl;
 
 import com.example.cs_common.util.BaseService;
 import com.example.cs_progress.model.entity.TagProgress;
-import com.example.cs_progress.model.entity.TagTaskCount;
-import com.example.cs_progress.model.entity.TagTaskTopicCount;
+import com.example.cs_progress.model.entity.TagCount;
+import com.example.cs_progress.model.entity.TagTopicCount;
 import com.example.cs_progress.model.entity.TagTopicProgress;
 import com.example.cs_progress.repository.TagProgressRepository;
-import com.example.cs_progress.repository.TagTaskCountRepository;
+import com.example.cs_progress.repository.TagCountRepository;
 import com.example.cs_progress.service.TagProgressService;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 public class TagProgressServiceImpl extends BaseService implements TagProgressService {
 
     private final TagProgressRepository tagProgressRepository;
-    private final TagTaskCountRepository tagTaskCountRepository;
+    private final TagCountRepository tagCountRepository;
 
     private static final Double MAX_TEST_ITEM_SCORE = 10.0;
 
@@ -204,7 +204,7 @@ public class TagProgressServiceImpl extends BaseService implements TagProgressSe
         log.info("Building new TagProgress for tag: {} in topicId: {} in courseId: {}",
                 tagName, topicId, courseId);
 
-        TagTaskCount expectedTaskCount = loadOrCreateTagTaskCount(tagName, courseId);
+        TagCount expectedTaskCount = loadOrCreateTagTaskCount(tagName, courseId);
 
         TagProgress tagProgress = TagProgress.builder()
                 .tagName(tagName)
@@ -221,10 +221,10 @@ public class TagProgressServiceImpl extends BaseService implements TagProgressSe
     /**
      * Загрузить или создать TagTaskCount (если тег новый и еще не посчитан)
      */
-    private TagTaskCount loadOrCreateTagTaskCount(@NonNull final String tagName,
-                                                  @NonNull final String courseId) {
-        return tagTaskCountRepository.findByTagName(tagName)
-                .orElse(TagTaskCount.builder()
+    private TagCount loadOrCreateTagTaskCount(@NonNull final String tagName,
+                                              @NonNull final String courseId) {
+        return tagCountRepository.findByTagName(tagName)
+                .orElse(TagCount.builder()
                         .tagName(tagName)
                         .courseId(courseId)
                         .build());
@@ -234,7 +234,7 @@ public class TagProgressServiceImpl extends BaseService implements TagProgressSe
      * Инициализировать все TagTopicProgress для всех топиков, где встречается тег
      */
     private void initializeAllTopicProgresses(@NonNull final TagProgress tagProgress,
-                                              @NonNull final TagTaskCount expectedTaskCount,
+                                              @NonNull final TagCount expectedTaskCount,
                                               @NonNull final String activeTopicId,
                                               final Boolean isCorrect,
                                               final Boolean isTaskCompletion) {
@@ -243,7 +243,7 @@ public class TagProgressServiceImpl extends BaseService implements TagProgressSe
             return;
         }
 
-        for (TagTaskTopicCount topicCount : expectedTaskCount.getTopicCounts()) {
+        for (TagTopicCount topicCount : expectedTaskCount.getTopicCounts()) {
             TagTopicProgress tagTopicProgress = createTagTopicProgress(tagProgress, topicCount);
 
             // Применяем активность только к текущему топику
@@ -259,7 +259,7 @@ public class TagProgressServiceImpl extends BaseService implements TagProgressSe
      * Создать TagTopicProgress для конкретного топика
      */
     private TagTopicProgress createTagTopicProgress(@NonNull final TagProgress tagProgress,
-                                                    @NonNull final TagTaskTopicCount topicCount) {
+                                                    @NonNull final TagTopicCount topicCount) {
         return TagTopicProgress.builder()
                 .topicId(topicCount.getTopicId())
                 .expectedTasks(topicCount.getCount())
@@ -290,11 +290,11 @@ public class TagProgressServiceImpl extends BaseService implements TagProgressSe
      */
     private Integer findExpectedTasksForTopic(@NonNull final String tagName,
                                               @NonNull final String topicId) {
-        return tagTaskCountRepository.findByTagName(tagName)
+        return tagCountRepository.findByTagName(tagName)
                 .flatMap(ttc -> ttc.getTopicCounts().stream()
                         .filter(tc -> tc.getTopicId().equals(topicId))
                         .findFirst())
-                .map(TagTaskTopicCount::getCount)
+                .map(TagTopicCount::getCount)
                 .orElse(0);
     }
 

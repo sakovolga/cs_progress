@@ -17,6 +17,7 @@ import com.example.cs_progress.model.entity.TaskProgress;
 import com.example.cs_progress.repository.TaskProgressRepository;
 import com.example.cs_progress.service.TagProgressService;
 import com.example.cs_progress.service.TaskProgressService;
+import com.example.cs_progress.service.TopicProgressService;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,7 @@ public class TaskProgressServiceImpl extends BaseService implements TaskProgress
     private final TaskProgressRepository taskProgressRepository;
     private final TaskProgressMapper taskProgressMapper;
     private final TagProgressService tagProgressService;
+    private final TopicProgressService topicProgressService;
 
     @Override
     @Transactional(readOnly = true)
@@ -143,6 +145,9 @@ public class TaskProgressServiceImpl extends BaseService implements TaskProgress
         if (!previousStatus.equals(TaskStatus.SOLVED)) {
             tagProgressService.processTagsFromCompletedTask(
                     taskProgress.getCourseId(), taskProgress.getTopicId(), taskProgress.getUserId(), event.getTagNames()
+            );
+            topicProgressService.updateTaskStatsInTopicProgress(
+                    taskProgress.getUserId(), taskProgress.getCourseId(), taskProgress.getTopicId()
             );
         }
 
