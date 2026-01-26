@@ -18,6 +18,7 @@ import com.example.cs_progress.repository.TopicProgressRepository;
 import com.example.cs_progress.service.TestProgressService;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -97,6 +98,7 @@ public class TestProgressServiceImpl extends BaseService implements TestProgress
 
     @Override
     @Transactional
+    @CacheEvict(value = "topic-progress", key = "#rq.userId")
     public TestResultRs finishTest(@NonNull final TestItemUserResolvedRq rq) {
         log.info("Finishing test for userId={}, testId={}",
                 rq.getUserId(), rq.getTestItemResolvedRq().getTestId());
