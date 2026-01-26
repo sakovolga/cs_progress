@@ -15,6 +15,7 @@ import com.example.cs_common.util.BaseService;
 import com.example.cs_progress.mapper.TaskProgressMapper;
 import com.example.cs_progress.model.entity.TaskProgress;
 import com.example.cs_progress.repository.TaskProgressRepository;
+import com.example.cs_progress.service.CacheEvictionService;
 import com.example.cs_progress.service.TagProgressService;
 import com.example.cs_progress.service.TaskProgressService;
 import com.example.cs_progress.service.TopicProgressService;
@@ -35,6 +36,7 @@ public class TaskProgressServiceImpl extends BaseService implements TaskProgress
     private final TaskProgressMapper taskProgressMapper;
     private final TagProgressService tagProgressService;
     private final TopicProgressService topicProgressService;
+    private final CacheEvictionService cacheEvictionService;
 
     @Override
     @Transactional(readOnly = true)
@@ -141,6 +143,8 @@ public class TaskProgressServiceImpl extends BaseService implements TaskProgress
             taskProgress.setCodeQualityRating(incoming);
         }
         taskProgressRepository.save(taskProgress);
+
+        cacheEvictionService.evictTopicProgress(taskProgress.getUserId());
 
         if (!previousStatus.equals(TaskStatus.SOLVED)) {
             tagProgressService.processTagsFromCompletedTask(

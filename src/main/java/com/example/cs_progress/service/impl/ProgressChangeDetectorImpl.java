@@ -10,6 +10,7 @@ import com.example.cs_progress.service.ProgressChangeDetector;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -25,6 +26,7 @@ public class ProgressChangeDetectorImpl extends BaseService implements ProgressC
      * Проверить были ли изменения в прогрессе с указанного момента
      */
     @Override
+    @Transactional(readOnly = true)
     public boolean hasChanges(@NonNull String userId, @NonNull LocalDateTime since) {
         log.debug("Checking for changes for user: {} since: {}", userId, since);
 
