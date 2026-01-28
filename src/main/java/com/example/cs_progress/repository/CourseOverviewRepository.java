@@ -12,4 +12,6 @@ public interface CourseOverviewRepository extends JpaRepository<CourseOverview, 
 
     @EntityGraph(attributePaths = {"taskTopicCounts", "tagCounts", "tagCounts.topicCounts"})
     Optional<CourseOverview> findByCourseId(String courseId);
+
+    void deleteByCourseId(String courseId);
 }

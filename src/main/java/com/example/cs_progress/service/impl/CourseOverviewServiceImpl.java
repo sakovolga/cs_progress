@@ -1,7 +1,10 @@
 package com.example.cs_progress.service.impl;
 
+import com.example.cs_common.dto.common.CourseOverviewDto;
 import com.example.cs_common.dto.event.TaskStatsChangedEvent;
+import com.example.cs_common.dto.response.CourseOverviewSynchronizationRs;
 import com.example.cs_common.util.BaseService;
+import com.example.cs_progress.mapper.CourseOverviewMapper;
 import com.example.cs_progress.model.entity.CourseOverview;
 import com.example.cs_progress.repository.CourseOverviewRepository;
 import com.example.cs_progress.service.CourseOverviewService;
@@ -19,6 +22,7 @@ public class CourseOverviewServiceImpl extends BaseService implements CourseOver
     private final CourseOverviewRepository courseOverviewRepository;
     private final TagCountService tagCountService;
     private final TaskTopicCountService taskTopicCountService;
+    private final CourseOverviewMapper courseOverviewMapper;
 
     @Override
     @Transactional
@@ -40,4 +44,23 @@ public class CourseOverviewServiceImpl extends BaseService implements CourseOver
 
         courseOverviewRepository.save(courseOverview);
     }
+
+    @Override
+    @Transactional
+    public CourseOverviewSynchronizationRs synchronizeCourseOverview(@NonNull final CourseOverviewDto courseOverviewDto) {
+        log.info("Synchronizing CourseOverview for courseId: {}", courseOverviewDto.getCourseId());
+
+        courseOverviewRepository.deleteByCourseId(courseOverviewDto.getCourseId());
+
+        CourseOverview courseOverview = courseOverviewMapper.toCourseOverview(courseOverviewDto);
+        courseOverview = courseOverviewRepository.save(courseOverview);
+
+        log.info("CourseOverview synchronized successfully for courseId: {}", courseOverview.getCourseId());
+
+        return CourseOverviewSynchronizationRs.builder()
+                .courseId(courseOverview.getCourseId())
+                .lastUpdated(courseOverview.getUpdatedAt())
+                .build();
+    }
+
 }
