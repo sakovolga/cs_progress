@@ -2,48 +2,54 @@ package com.example.cs_progress.service.impl;
 
 import com.example.cs_common.dto.event.TaskStatsChangedEvent;
 import com.example.cs_common.util.BaseService;
+import com.example.cs_progress.model.entity.CourseOverview;
 import com.example.cs_progress.model.entity.TagCount;
 import com.example.cs_progress.model.entity.TagTopicCount;
-import com.example.cs_progress.repository.TagCountRepository;
 import com.example.cs_progress.service.TagCountService;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class TagCountServiceImpl extends BaseService implements TagCountService {
 
-    private final TagCountRepository tagCountRepository;
+//    private final TagCountRepository tagCountRepository;
 
     @Override
     @Transactional
-    public void update(@NonNull final TaskStatsChangedEvent event) {
+    public void update(@NonNull final TaskStatsChangedEvent event,
+                       @NonNull CourseOverview courseOverview) {
         log.info("Updating tag counts: courseId={}, topicId={}, tagsAdded={}, tagsRemoved={}",
                 event.getCourseId(), event.getTopicId(), event.getTagNamesAdded(), event.getTagNamesRemoved());
 
-        List<String> allTags = new ArrayList<>();
+        Set<String> allTags = new HashSet<>();
         allTags.addAll(event.getTagNamesAdded());
         allTags.addAll(event.getTagNamesRemoved());
 
-        List<TagCount> tagCounts =
-                tagCountRepository.findByTagNameInAndCourseId(allTags, event.getCourseId());
+//        List<TagCount> tagCounts =
+//                tagCountRepository.findByTagNameInAndCourseId(allTags, event.getCourseId());
+
+        List<TagCount> tagCounts = courseOverview.getTagCounts().stream()
+                .filter(tagCount -> allTags.contains(tagCount.getTagName()))
+                .toList();
 
         Map<String, TagCount> tagTaskCountMap = tagCounts.stream()
                 .collect(Collectors.toMap(TagCount::getTagName, ttc -> ttc));
 
-        List<TagCount> toSave = new ArrayList<>();
+//        List<TagCount> toSave = new ArrayList<>();
 
         for (String tag : allTags) {
             TagCount tagCount = tagTaskCountMap.computeIfAbsent(
                     tag,
-                    t -> buildTagTaskCount(event.getCourseId(), t)
+                    this::buildTagTaskCount
             );
 
             TagTopicCount tagTopicCount = tagCount.getTopicCounts().stream()
@@ -57,19 +63,22 @@ public class TagCountServiceImpl extends BaseService implements TagCountService 
                 tagTopicCount.decrementCount();
             }
 
-            toSave.add(tagCount);
+            if (tagCount.getCourseOverview() == null) {
+                tagCount.setCourseOverview(courseOverview);
+                courseOverview.getTagCounts().add(tagCount);
+            }
+//            toSave.add(tagCount);
         }
 
-        tagCountRepository.saveAll(toSave);
+//        tagCountRepository.saveAll(toSave);
         log.info(
                 "{} tags was increment, {} tags was decrement",
                 event.getTagNamesAdded().size(), event.getTagNamesRemoved().size()
         );
     }
 
-    private TagCount buildTagTaskCount(String courseId, String tagName) {
+    private TagCount buildTagTaskCount(String tagName) {
         return TagCount.builder()
-                .courseId(courseId)
                 .tagName(tagName)
                 .build();
     }

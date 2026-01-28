@@ -22,8 +22,7 @@ import java.time.LocalDateTime;
 @Table(name = "tag_topic_progresses",
         uniqueConstraints = @UniqueConstraint(columnNames = {"tag_progress_id", "topic_id"}),
         indexes = {
-                @Index(name = "idx_topic_id", columnList = "topic_id"),
-                @Index(name = "idx_tag_progress_topic", columnList = "tag_progress_id, topic_id")
+                @Index(name = "idx_topic_id", columnList = "topic_id")
         })
 @Getter
 @NoArgsConstructor

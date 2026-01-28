@@ -12,6 +12,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Objects;
+
 @Entity
 @Table(name = "tag_topic_counts")
 @Builder
@@ -44,6 +46,19 @@ public class TagTopicCount extends IdentifiableEntity {
         } else {
             this.count--;
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        TagTopicCount that = (TagTopicCount) o;
+        return Objects.equals(tagCount, that.tagCount) && Objects.equals(topicId, that.topicId) && Objects.equals(count, that.count);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), tagCount, topicId, count);
     }
 }
 
