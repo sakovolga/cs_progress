@@ -35,9 +35,6 @@ public class TagCount extends IdentifiableEntity {
     @Column(name = "tag_name")
     private String tagName;
 
-//    @Column(name = "course_id")
-//    private String courseId;
-
     @OneToMany(
             mappedBy = "tagCount",
             cascade = CascadeType.ALL,
