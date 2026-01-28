@@ -2,8 +2,7 @@ package com.example.cs_progress.listener;
 
 import com.example.cs_common.dto.event.TaskStatsChangedEvent;
 import com.example.cs_common.util.BaseListener;
-import com.example.cs_progress.service.TagCountService;
-import com.example.cs_progress.service.TaskTopicCountService;
+import com.example.cs_progress.service.CourseOverviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -13,8 +12,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class TaskStatsChangedListener extends BaseListener {
 
-    private final TagCountService tagCountService;
-    private final TaskTopicCountService taskTopicCountService;
+    private final CourseOverviewService courseOverviewService;
 
     @RabbitListener(queues = "task.stats.changed.queue")
     public void handleTagsUpdatedEvent(@Payload TaskStatsChangedEvent event) {
@@ -30,10 +28,8 @@ public class TaskStatsChangedListener extends BaseListener {
         );
         try {
             validateEvent(event);
-            tagCountService.update(event);
-            if (event.getIsTaskCreated() || event.getIsTaskDeleted()) {
-                taskTopicCountService.updateTaskTopicCount(event);
-            }
+            courseOverviewService.handleTaskStatsChangedEvent(event);
+
             log.info("Successfully processed task stats changed event");
 
         } catch (IllegalArgumentException e) {

@@ -3,6 +3,9 @@ package com.example.cs_progress.model.entity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
@@ -12,8 +15,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+
 @Entity
 @Table(name = "tag_counts")
 @Builder
@@ -23,11 +28,15 @@ import java.util.List;
 @Setter
 public class TagCount extends IdentifiableEntity {
 
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "course_overview_id", nullable = false)
+    private CourseOverview courseOverview;
+
     @Column(name = "tag_name")
     private String tagName;
 
-    @Column(name = "course_id")
-    private String courseId;
+//    @Column(name = "course_id")
+//    private String courseId;
 
     @OneToMany(
             mappedBy = "tagCount",
@@ -35,7 +44,7 @@ public class TagCount extends IdentifiableEntity {
             orphanRemoval = true
     )
     @Builder.Default
-    private List<TagTopicCount> topicCounts = new ArrayList<>();
+    private Set<TagTopicCount> topicCounts = new HashSet<>();
 
     /**
      * Производное поле — НЕ хранится в БД
@@ -47,5 +56,17 @@ public class TagCount extends IdentifiableEntity {
                 .sum();
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        TagCount tagCount = (TagCount) o;
+        return Objects.equals(courseOverview, tagCount.courseOverview) && Objects.equals(tagName, tagCount.tagName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), courseOverview, tagName);
+    }
 }
 
