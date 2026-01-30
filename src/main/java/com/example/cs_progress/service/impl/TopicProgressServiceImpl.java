@@ -7,6 +7,8 @@ import com.example.cs_common.exception.NotFoundException;
 import com.example.cs_common.util.BaseService;
 import com.example.cs_progress.model.entity.TaskTopicCount;
 import com.example.cs_progress.model.entity.TopicProgress;
+import com.example.cs_progress.model.projection.CourseInfo;
+import com.example.cs_progress.repository.CourseOverviewRepository;
 import com.example.cs_progress.repository.TaskTopicCountRepository;
 import com.example.cs_progress.repository.TopicProgressRepository;
 import com.example.cs_progress.service.TopicProgressService;
@@ -28,6 +30,7 @@ public class TopicProgressServiceImpl extends BaseService implements TopicProgre
 
     private final TopicProgressRepository topicProgressRepository;
     private final TaskTopicCountRepository taskTopicCountRepository;
+    private final CourseOverviewRepository courseOverviewRepository;
 
     @Override
     @Transactional
@@ -56,10 +59,19 @@ public class TopicProgressServiceImpl extends BaseService implements TopicProgre
     }
 
     @Override
+    @Transactional(readOnly = true)
     public DashboardRs getUserDashboard(@NonNull final String userId) {
         log.info("Attempting to get dashboard for userId: {}", userId);
 
         List<TopicProgress> topicProgressList = topicProgressRepository.findByUserId(userId);
+
+        if (topicProgressList.isEmpty()) {
+            log.info("No topic progress found for userId: {}", userId);
+            return DashboardRs.builder()
+                    .userId(userId)
+                    .courses(List.of())
+                    .build();
+        }
 
         Map<String, Integer> completedTopicsByCourse = topicProgressList.stream()
                 .collect(Collectors.groupingBy(
@@ -69,10 +81,18 @@ public class TopicProgressServiceImpl extends BaseService implements TopicProgre
                         )
                 ));
 
+        List<String> courseIds = completedTopicsByCourse.keySet().stream().toList();
+        List<CourseInfo> courseInfos = courseOverviewRepository.findByCourseIdIn(courseIds);
+        Map<String, CourseInfo> courseInfoMap = courseInfos.stream()
+                .collect(Collectors.toMap(CourseInfo::getCourseId, ci -> ci));
+
         DashboardRs dashboardRs = new DashboardRs();
+        dashboardRs.setUserId(userId);
         completedTopicsByCourse.forEach((key, value) -> {
             DashboardCourseInfoRs courseInfoRs = DashboardCourseInfoRs.builder()
                     .courseId(key)
+                    .courseName(courseInfoMap.get(key).getCourseName())
+                    .totalTopics(courseInfoMap.get(key).getTotalTopics())
                     .completedTopics(value)
                     .build();
             dashboardRs.getCourses().add(courseInfoRs);
