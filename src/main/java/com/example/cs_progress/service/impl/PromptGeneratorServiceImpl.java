@@ -19,62 +19,62 @@ import java.util.List;
 public class PromptGeneratorServiceImpl extends BaseService implements PromptGeneratorService {
 
     /**
-     * Генерация промпта для ИИ-анализа
+     * Generate AI analysis prompt
      */
     public String generatePrompt(PromptData data) {
         log.debug("Generating AI prompt for user: {}", data.getUserId());
 
         StringBuilder prompt = new StringBuilder();
 
-        // Заголовок
-        prompt.append("Проанализируй прогресс пользователя и дай персонализированные рекомендации.\n\n");
+        // Header
+        prompt.append("Analyze the user's progress and provide personalized recommendations.\n\n");
 
-        // Секция 1: Лучшие топики по задачам
+        // Section 1: Best topics by tasks
         appendTopicSection(
                 prompt,
-                "ТОПИКИ С ЛУЧШИМИ РЕЗУЛЬТАТАМИ ПО ЗАДАЧАМ:",
+                "BEST PERFORMING TOPICS BY TASKS:",
                 data.getBestTopicsByTasks()
         );
 
-        // Секция 2: Худшие топики по задачам
+        // Section 2: Worst topics by tasks
         appendTopicSection(
                 prompt,
-                "ТОПИКИ ТРЕБУЮЩИЕ ПРАКТИКИ (низкий % задач):",
+                "TOPICS REQUIRING PRACTICE (low task completion %):",
                 data.getWorstTopicsByTasks()
         );
 
-        // Секция 3: Лучшие топики по тестам
+        // Section 3: Best topics by tests
         appendTopicSection(
                 prompt,
-                "ТОПИКИ С ЛУЧШИМИ РЕЗУЛЬТАТАМИ ПО ТЕСТАМ:",
+                "BEST PERFORMING TOPICS BY TESTS:",
                 data.getBestTopicsByTests()
         );
 
-        // Секция 4: Худшие топики по тестам
+        // Section 4: Worst topics by tests
         appendTopicSection(
                 prompt,
-                "ТОПИКИ ТРЕБУЮЩИЕ ПОВТОРЕНИЯ ТЕОРИИ (низкий % теста):",
+                "TOPICS REQUIRING THEORY REVIEW (low test score %):",
                 data.getWorstTopicsByTests()
         );
 
-        // Секция 5: Лучшие навыки
+        // Section 5: Best skills
         appendSkillSection(
                 prompt,
-                "ЛУЧШИЕ НАВЫКИ (в контексте топиков):",
+                "STRONGEST SKILLS (in context of topics):",
                 data.getBestSkills()
         );
 
-        // Секция 6: Слабые навыки
+        // Section 6: Weak skills
         appendSkillSection(
                 prompt,
-                "СЛАБЫЕ НАВЫКИ (в контексте топиков):",
+                "WEAK SKILLS (in context of topics):",
                 data.getWeakSkills()
         );
 
-        // Секция 7: Активность
+        // Section 7: Activity
         appendActivitySection(prompt, data);
 
-        // Секция 8: Задание для ИИ
+        // Section 8: AI task
         appendTaskSection(prompt);
 
         log.debug("Prompt generated, length: {} characters", prompt.length());
@@ -83,13 +83,13 @@ public class PromptGeneratorServiceImpl extends BaseService implements PromptGen
     }
 
     /**
-     * Добавить секцию с топиками
+     * Append topic section
      */
     private void appendTopicSection(StringBuilder prompt, String title, List<TopicSummary> topics) {
         prompt.append(title).append("\n");
 
         if (topics == null || topics.isEmpty()) {
-            prompt.append("(нет данных)\n\n");
+            prompt.append("(no data)\n\n");
             return;
         }
 
@@ -101,20 +101,20 @@ public class PromptGeneratorServiceImpl extends BaseService implements PromptGen
                     topic.getCourseTitle()
             ));
 
-            // Добавляем метрики в зависимости от типа секции
-            if (title.contains("ЗАДАЧАМ")) {
-                prompt.append(String.format("%d%% задач (%d/%d)",
+            // Add metrics depending on section type
+            if (title.contains("TASKS")) {
+                prompt.append(String.format("%d%% tasks completed (%d/%d)",
                         topic.getTaskCompletionPercentage().intValue(),
                         topic.getCompletedTasks(),
                         topic.getTotalTasks()
                 ));
-            } else if (title.contains("ТЕСТАМ")) {
-                prompt.append(String.format("%d%% тест",
+            } else if (title.contains("TESTS")) {
+                prompt.append(String.format("%d%% test score",
                         topic.getBestTestScorePercentage().intValue()
                 ));
             }
 
-            prompt.append(String.format(", последняя активность: %s\n",
+            prompt.append(String.format(", last activity: %s\n",
                     formatLastActivity(topic.getLastActivity())
             ));
         }
@@ -123,19 +123,19 @@ public class PromptGeneratorServiceImpl extends BaseService implements PromptGen
     }
 
     /**
-     * Добавить секцию с навыками
+     * Append skill section
      */
     private void appendSkillSection(StringBuilder prompt, String title, List<SkillSummary> skills) {
         prompt.append(title).append("\n");
 
         if (skills == null || skills.isEmpty()) {
-            prompt.append("(нет данных)\n\n");
+            prompt.append("(no data)\n\n");
             return;
         }
 
         for (int i = 0; i < skills.size(); i++) {
             SkillSummary skill = skills.get(i);
-            prompt.append(String.format("%d. %s (в топике \"%s\"): %d%% прогресс, последняя активность: %s\n",
+            prompt.append(String.format("%d. %s (in topic \"%s\"): %d%% progress, last activity: %s\n",
                     i + 1,
                     skill.getSkillName(),
                     skill.getTopicTitle(),
@@ -148,42 +148,42 @@ public class PromptGeneratorServiceImpl extends BaseService implements PromptGen
     }
 
     /**
-     * Добавить секцию активности
+     * Append activity section
      */
     private void appendActivitySection(StringBuilder prompt, PromptData data) {
-        prompt.append("АКТИВНОСТЬ:\n");
-        prompt.append(String.format("Дней без активности: %d\n", data.getDaysSinceLastActivity()));
+        prompt.append("ACTIVITY:\n");
+        prompt.append(String.format("Days since last activity: %d\n", data.getDaysSinceLastActivity()));
 
         if (data.getCurrentStreak() != null && data.getCurrentStreak() > 0) {
-            prompt.append(String.format("Текущий streak: %d дней подряд\n", data.getCurrentStreak()));
+            prompt.append(String.format("Current streak: %d days in a row\n", data.getCurrentStreak()));
         }
 
         prompt.append("\n");
     }
 
     /**
-     * Добавить секцию с заданием для ИИ
+     * Append AI task section
      */
     private void appendTaskSection(StringBuilder prompt) {
-        prompt.append("ЗАДАНИЕ:\n");
-        prompt.append("1. Похвали пользователя за топики с хорошими результатами по задачам и тестам.\n");
-        prompt.append("2. Дай 3-5 конкретных рекомендаций:\n");
-        prompt.append("   - Какие топики требуют дополнительной практики задач\n");
-        prompt.append("   - Какие топики требуют повторения теории (низкий балл теста)\n");
-        prompt.append("   - Какие слабые навыки нужно практиковать\n");
-        prompt.append("3. Мотивируй в зависимости от активности:\n");
-        prompt.append("   - Если 0-2 дня без активности: похвали за регулярность\n");
-        prompt.append("   - Если 3-7 дней: мягко напомни о продолжении\n");
-        prompt.append("   - Если 7+ дней: мотивируй вернуться к обучению\n\n");
-        prompt.append("Тон: дружелюбный, поддерживающий, конкретный.\n");
-        prompt.append("Формат ответа: JSON\n");
+        prompt.append("TASK:\n");
+        prompt.append("1. Praise the user for topics with good task and test results.\n");
+        prompt.append("2. Provide 3-5 specific recommendations:\n");
+        prompt.append("   - Which topics require additional task practice\n");
+        prompt.append("   - Which topics require theory review (low test score)\n");
+        prompt.append("   - Which weak skills need to be practiced\n");
+        prompt.append("3. Motivate based on activity:\n");
+        prompt.append("   - If 0-2 days without activity: praise for consistency\n");
+        prompt.append("   - If 3-7 days: gently remind to continue\n");
+        prompt.append("   - If 7+ days: motivate to return to learning\n\n");
+        prompt.append("Tone: friendly, supportive, specific.\n");
+        prompt.append("Response format: JSON\n");
         prompt.append("{\n");
-        prompt.append("  \"summary\": \"краткий обзор 2-3 предложения\",\n");
-        prompt.append("  \"strengths\": [\"сильная сторона 1\", \"сильная сторона 2\"],\n");
+        prompt.append("  \"summary\": \"brief overview in 2-3 sentences\",\n");
+        prompt.append("  \"strengths\": [\"strength 1\", \"strength 2\"],\n");
         prompt.append("  \"recommendations\": [\n");
         prompt.append("    {\n");
-        prompt.append("      \"title\": \"заголовок рекомендации\",\n");
-        prompt.append("      \"description\": \"описание\",\n");
+        prompt.append("      \"title\": \"recommendation title\",\n");
+        prompt.append("      \"description\": \"description\",\n");
         prompt.append("      \"priority\": \"high|medium|low\"\n");
         prompt.append("    }\n");
         prompt.append("  ]\n");
@@ -191,21 +191,21 @@ public class PromptGeneratorServiceImpl extends BaseService implements PromptGen
     }
 
     /**
-     * Форматирование времени последней активности
+     * Format last activity time
      */
     private String formatLastActivity(LocalDateTime lastActivity) {
         if (lastActivity == null) {
-            return "давно";
+            return "long ago";
         }
 
         long days = ChronoUnit.DAYS.between(lastActivity, LocalDateTime.now());
 
-        if (days == 0) return "сегодня";
-        if (days == 1) return "1 день назад";
-        if (days < 7) return days + " дней назад";
-        if (days < 14) return "1 неделя назад";
-        if (days < 30) return (days / 7) + " недель назад";
+        if (days == 0) return "today";
+        if (days == 1) return "1 day ago";
+        if (days < 7) return days + " days ago";
+        if (days < 14) return "1 week ago";
+        if (days < 30) return (days / 7) + " weeks ago";
 
-        return "более месяца назад";
+        return "over a month ago";
     }
 }

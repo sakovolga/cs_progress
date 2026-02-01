@@ -61,7 +61,7 @@ public class PromptDataCollectorServiceImpl extends BaseService implements Promp
         Integer daysSinceLastActivity = calculateDaysSinceLastActivity(allTopics);
         Integer currentStreak = calculateStreak(userId);
 
-        return PromptData.builder()
+        PromptData promptData =  PromptData.builder()
                 .userId(userId)
                 .bestTopicsByTasks(bestByTasks)
                 .worstTopicsByTasks(worstByTasks)
@@ -72,6 +72,9 @@ public class PromptDataCollectorServiceImpl extends BaseService implements Promp
                 .daysSinceLastActivity(daysSinceLastActivity)
                 .currentStreak(currentStreak)
                 .build();
+
+        log.info("Collected prompt data for user: {}: {}", userId, promptData);
+        return promptData;
     }
 
     /**

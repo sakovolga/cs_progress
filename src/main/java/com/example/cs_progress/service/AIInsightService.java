@@ -1,6 +1,6 @@
 package com.example.cs_progress.service;
 
-import com.example.cs_progress.model.AIInsightResponse;
+import com.example.cs_common.dto.analitics.AIInsightResponse;
 
 public interface AIInsightService {
 

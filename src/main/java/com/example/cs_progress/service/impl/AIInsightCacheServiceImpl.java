@@ -1,11 +1,11 @@
 package com.example.cs_progress.service.impl;
 
+import com.example.cs_common.dto.analitics.AIInsightResponse;
+import com.example.cs_common.dto.analitics.Recommendation;
 import com.example.cs_common.exception.AIInsightGenerationException;
 import com.example.cs_common.exception.AIInsightParsingException;
 import com.example.cs_common.util.BaseCacheService;
-import com.example.cs_progress.model.AIInsightResponse;
 import com.example.cs_progress.model.PromptData;
-import com.example.cs_progress.model.Recommendation;
 import com.example.cs_progress.service.AIInsightCacheService;
 import com.example.cs_progress.service.PromptDataCollectorService;
 import com.example.cs_progress.service.PromptGeneratorService;
@@ -104,8 +104,19 @@ public class AIInsightCacheServiceImpl extends BaseCacheService implements AIIns
      */
     private AIInsightResponse parseAIResponse(String aiResponse) {
         try {
+            String cleanedResponse = aiResponse.trim();
+            if (cleanedResponse.startsWith("```json")) {
+                cleanedResponse = cleanedResponse.substring(7); // убираем ```json
+            } else if (cleanedResponse.startsWith("```")) {
+                cleanedResponse = cleanedResponse.substring(3); // убираем ```
+            }
+            if (cleanedResponse.endsWith("```")) {
+                cleanedResponse = cleanedResponse.substring(0, cleanedResponse.length() - 3);
+            }
+            cleanedResponse = cleanedResponse.trim();
+
             ObjectMapper objectMapper = new ObjectMapper();
-            JsonNode rootNode = objectMapper.readTree(aiResponse);
+            JsonNode rootNode = objectMapper.readTree(cleanedResponse);
 
             String summary = rootNode.path("summary").asText();
 
