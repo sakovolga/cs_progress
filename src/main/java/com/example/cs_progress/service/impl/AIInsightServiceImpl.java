@@ -1,7 +1,7 @@
 package com.example.cs_progress.service.impl;
 
+import com.example.cs_common.dto.analitics.AIInsightResponse;
 import com.example.cs_common.util.BaseService;
-import com.example.cs_progress.model.AIInsightResponse;
 import com.example.cs_progress.service.AIInsightCacheService;
 import com.example.cs_progress.service.AIInsightService;
 import com.example.cs_progress.service.ProgressChangeDetector;
@@ -21,10 +21,8 @@ public class AIInsightServiceImpl extends BaseService implements AIInsightServic
     public AIInsightResponse getInsight(String userId) {
         log.info("Getting AI insight for user: {}", userId);
 
-        // Получаем из кэша (или генерируем если нет)
         AIInsightResponse insight = cacheService.getInsight(userId);
 
-        // Проверяем: были ли изменения?
         boolean hasChanges = changeDetector.hasChanges(userId, insight.getGeneratedAt());
 
         if (hasChanges) {
