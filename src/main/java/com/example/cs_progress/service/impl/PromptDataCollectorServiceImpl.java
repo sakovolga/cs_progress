@@ -1,15 +1,19 @@
 package com.example.cs_progress.service.impl;
 
 import com.example.cs_common.enums.TopicStatus;
+import com.example.cs_common.exception.NotFoundException;
 import com.example.cs_common.util.BaseService;
 import com.example.cs_progress.model.PromptData;
 import com.example.cs_progress.model.SkillSummary;
 import com.example.cs_progress.model.TopicSummary;
+import com.example.cs_progress.model.entity.CourseOverview;
 import com.example.cs_progress.model.entity.TagTopicProgress;
+import com.example.cs_progress.model.entity.TopicOverview;
 import com.example.cs_progress.model.entity.TopicProgress;
 import com.example.cs_progress.repository.TagProgressRepository;
 import com.example.cs_progress.repository.TagTopicProgressRepository;
 import com.example.cs_progress.repository.TopicProgressRepository;
+import com.example.cs_progress.service.CourseOverviewCacheService;
 import com.example.cs_progress.service.PromptDataCollectorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,6 +27,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.example.cs_common.exception.error.SystemError.ENTITY_NOT_FOUND_ERROR;
+
 @Service
 @RequiredArgsConstructor
 public class PromptDataCollectorServiceImpl extends BaseService implements PromptDataCollectorService {
@@ -30,6 +36,7 @@ public class PromptDataCollectorServiceImpl extends BaseService implements Promp
     private final TopicProgressRepository topicProgressRepository;
     private final TagProgressRepository tagProgressRepository;
     private final TagTopicProgressRepository tagTopicProgressRepository;
+    private final CourseOverviewCacheService courseOverviewCacheService;
 
     /**
      * Собрать все данные для формирования промпта
@@ -61,7 +68,7 @@ public class PromptDataCollectorServiceImpl extends BaseService implements Promp
         Integer daysSinceLastActivity = calculateDaysSinceLastActivity(allTopics);
         Integer currentStreak = calculateStreak(userId);
 
-        PromptData promptData =  PromptData.builder()
+        PromptData promptData = PromptData.builder()
                 .userId(userId)
                 .bestTopicsByTasks(bestByTasks)
                 .worstTopicsByTasks(worstByTasks)
@@ -245,11 +252,16 @@ public class PromptDataCollectorServiceImpl extends BaseService implements Promp
      * Преобразование TopicProgress в TopicSummary
      */
     private TopicSummary toTopicSummary(TopicProgress topic) {
+        CourseOverview courseOverview = courseOverviewCacheService.findByCourseId(topic.getCourseId())
+                .orElseThrow(() -> new NotFoundException(
+                        "CourseOverview not found for courseId: " + topic.getCourseId() + ", synchronization needed",
+                        ENTITY_NOT_FOUND_ERROR));
+
         return TopicSummary.builder()
                 .topicId(topic.getTopicId())
-                .topicTitle("Topic " + topic.getTopicId()) // TODO: получить из content service
+                .topicTitle(getTopicTitle(courseOverview, topic.getTopicId()))
                 .courseId(topic.getCourseId())
-                .courseTitle("Course " + topic.getCourseId()) // TODO: получить из content service
+                .courseTitle(courseOverview.getCourseName())
                 .completedTasks(topic.getCompletedTasks())
                 .totalTasks(topic.getTotalTasks())
                 .taskCompletionPercentage(topic.getTaskCompletionPercentage())
@@ -258,14 +270,29 @@ public class PromptDataCollectorServiceImpl extends BaseService implements Promp
                 .build();
     }
 
+    private String getTopicTitle(CourseOverview courseOverview, String topicId) {
+        return courseOverview.getTopicOverviews().stream()
+                .filter(topicOverview -> topicOverview.getTopicId().equals(topicId))
+                .map(TopicOverview::getTopicName)
+                .findFirst()
+                .orElseThrow(() -> new NotFoundException(
+                        "TopicOverview with topicId: " + topicId + " not found for courseId: "
+                                + courseOverview.getCourseId() + ", synchronization needed",
+                        ENTITY_NOT_FOUND_ERROR));
+    }
+
     /**
      * Преобразование TagTopicProgress в SkillSummary
      */
     private SkillSummary toSkillSummary(TagTopicProgress ttp) {
+        CourseOverview courseOverview = courseOverviewCacheService.findByCourseId(ttp.getTagProgress().getCourseId())
+                .orElseThrow(() -> new NotFoundException(
+                        "CourseOverview not found for courseId: " + ttp.getTagProgress().getCourseId() + ", " +
+                                "synchronization needed", ENTITY_NOT_FOUND_ERROR));
         return SkillSummary.builder()
                 .skillName(ttp.getTagProgress().getTagName())
                 .topicId(ttp.getTopicId())
-                .topicTitle("Topic " + ttp.getTopicId()) // TODO: получить из content service
+                .topicTitle(getTopicTitle(courseOverview, ttp.getTopicId()))
                 .progressInTopic(ttp.getProgressInTopic())
                 .topicLastActivity(ttp.getUpdatedAt())
                 .build();

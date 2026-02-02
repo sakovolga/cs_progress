@@ -43,7 +43,7 @@ public class CourseOverview extends IdentifiableEntity{
             orphanRemoval = true
     )
     @Builder.Default
-    private List<TaskTopicCount> taskTopicCounts = new ArrayList<>();
+    private List<TopicOverview> topicOverviews = new ArrayList<>();
 
     @OneToMany(
             mappedBy = "courseOverview",

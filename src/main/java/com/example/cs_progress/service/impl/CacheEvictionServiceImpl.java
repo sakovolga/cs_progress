@@ -17,4 +17,9 @@ public class CacheEvictionServiceImpl extends BaseCacheService implements CacheE
     public void evictAIInsights(String userId) {
         log.info("Evicting ai-insights cache for userId={}", userId);
     }
+
+    @CacheEvict(value = "course-overviews", key = "#courseId")
+    public void evictCourseOverview(String courseId) {
+        log.info("Evicting course overview cache for courseId={}", courseId);
+    }
 }

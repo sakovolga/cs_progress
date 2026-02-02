@@ -7,9 +7,10 @@ import com.example.cs_common.util.BaseService;
 import com.example.cs_progress.mapper.CourseOverviewMapper;
 import com.example.cs_progress.model.entity.CourseOverview;
 import com.example.cs_progress.repository.CourseOverviewRepository;
+import com.example.cs_progress.service.CacheEvictionService;
 import com.example.cs_progress.service.CourseOverviewService;
 import com.example.cs_progress.service.TagCountService;
-import com.example.cs_progress.service.TaskTopicCountService;
+import com.example.cs_progress.service.TopicOverviewService;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,8 +22,9 @@ public class CourseOverviewServiceImpl extends BaseService implements CourseOver
 
     private final CourseOverviewRepository courseOverviewRepository;
     private final TagCountService tagCountService;
-    private final TaskTopicCountService taskTopicCountService;
+    private final TopicOverviewService topicOverviewService;
     private final CourseOverviewMapper courseOverviewMapper;
+    private final CacheEvictionService cacheEvictionService;
 
     @Override
     @Transactional
@@ -40,9 +42,10 @@ public class CourseOverviewServiceImpl extends BaseService implements CourseOver
                         .build());
 
         tagCountService.update(event, courseOverview);
-        taskTopicCountService.updateTaskTopicCount(event, courseOverview);
+        topicOverviewService.updateTaskTopicCount(event, courseOverview);
 
         courseOverviewRepository.save(courseOverview);
+        cacheEvictionService.evictCourseOverview(event.getCourseId());
     }
 
     @Override
@@ -51,6 +54,7 @@ public class CourseOverviewServiceImpl extends BaseService implements CourseOver
         log.info("Synchronizing CourseOverview for courseId: {}", courseOverviewDto.getCourseId());
 
         courseOverviewRepository.deleteByCourseId(courseOverviewDto.getCourseId());
+        cacheEvictionService.evictCourseOverview(courseOverviewDto.getCourseId());
 
         CourseOverview courseOverview = courseOverviewMapper.toCourseOverview(courseOverviewDto);
         courseOverview = courseOverviewRepository.save(courseOverview);

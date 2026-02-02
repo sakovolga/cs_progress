@@ -13,13 +13,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "task_topic_counts")
+@Table(name = "topic_overviews")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
-public class TaskTopicCount extends IdentifiableEntity {
+public class TopicOverview extends IdentifiableEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "course_overview_id", nullable = false)
@@ -27,6 +27,9 @@ public class TaskTopicCount extends IdentifiableEntity {
 
     @Column(name = "topic_id")
     private String topicId;
+
+    @Column(name = "topic_name")
+    private String topicName;
 
     @Column(name = "count")
     @Builder.Default

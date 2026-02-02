@@ -17,7 +17,6 @@ public class CacheConfig {
     public CacheManager cacheManager() {
         CaffeineCacheManager cacheManager = new CaffeineCacheManager();
 
-        // Кэш для прогресса по топикам
         cacheManager.registerCustomCache("topic-progress",
                 Caffeine.newBuilder()
                         .expireAfterWrite(10, TimeUnit.MINUTES)
@@ -25,11 +24,17 @@ public class CacheConfig {
                         .build()
         );
 
-        // Кэш для ИИ-анализа
         cacheManager.registerCustomCache("ai-insights",
                 Caffeine.newBuilder()
-                        .expireAfterWrite(24, TimeUnit.HOURS) // ← 24 часа
-                        .maximumSize(10_000) // ← больше места (для всех пользователей)
+                        .expireAfterWrite(24, TimeUnit.HOURS)
+                        .maximumSize(10_000)
+                        .build()
+        );
+
+        cacheManager.registerCustomCache("course-overviews",
+                Caffeine.newBuilder()
+                        .expireAfterWrite(24, TimeUnit.HOURS)
+                        .maximumSize(50)
                         .build()
         );
 
