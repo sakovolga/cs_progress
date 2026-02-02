@@ -74,8 +74,6 @@ public class TagProgressServiceImpl extends BaseService implements TagProgressSe
 
         processTagsForActivity(courseId, topicId, userId, tagNames, null, true);
 
-        cacheEvictionService.evictAIInsights(userId);
-
         log.info("Completed processing tag progress for completed task for userId: {}", userId);
     }
 

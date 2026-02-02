@@ -5,19 +5,21 @@ import com.example.cs_common.dto.response.DashboardRs;
 import com.example.cs_common.enums.TopicStatus;
 import com.example.cs_common.exception.NotFoundException;
 import com.example.cs_common.util.BaseService;
-import com.example.cs_progress.model.entity.TaskTopicCount;
+import com.example.cs_progress.model.entity.CourseOverview;
+import com.example.cs_progress.model.entity.TopicOverview;
 import com.example.cs_progress.model.entity.TopicProgress;
-import com.example.cs_progress.model.projection.CourseInfo;
 import com.example.cs_progress.repository.CourseOverviewRepository;
-import com.example.cs_progress.repository.TaskTopicCountRepository;
+import com.example.cs_progress.repository.TopicOverviewRepository;
 import com.example.cs_progress.repository.TopicProgressRepository;
+import com.example.cs_progress.service.CacheEvictionService;
+import com.example.cs_progress.service.CourseOverviewCacheService;
 import com.example.cs_progress.service.TopicProgressService;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -29,12 +31,13 @@ import static com.example.cs_common.exception.error.SystemError.ENTITY_NOT_FOUND
 public class TopicProgressServiceImpl extends BaseService implements TopicProgressService {
 
     private final TopicProgressRepository topicProgressRepository;
-    private final TaskTopicCountRepository taskTopicCountRepository;
+    private final TopicOverviewRepository topicOverviewRepository;
     private final CourseOverviewRepository courseOverviewRepository;
+    private final CacheEvictionService cacheEvictionService;
+    private final CourseOverviewCacheService courseOverviewCacheService;
 
     @Override
     @Transactional
-    @CacheEvict(value = "topic-progress", key = "#userId")
     public void updateTaskStatsInTopicProgress(@NonNull final String userId,
                                                @NonNull final String courseId,
                                                @NonNull final String topicId) {
@@ -48,13 +51,14 @@ public class TopicProgressServiceImpl extends BaseService implements TopicProgre
                         .topicId(topicId)
                         .build());
 
-        TaskTopicCount taskTopicCount = taskTopicCountRepository.findByTopicId(topicId)
+        TopicOverview topicOverview = topicOverviewRepository.findByTopicId(topicId)
                 .orElseThrow(() -> new NotFoundException(
                         "TaskTopicCount not found for topicId: " + topicId, ENTITY_NOT_FOUND_ERROR)
                 );
-        topicProgress.setTotalTasks(taskTopicCount.getCount());
+        topicProgress.setTotalTasks(topicOverview.getCount());
         topicProgress.incrementCompletedTasks();
         topicProgressRepository.save(topicProgress);
+        cacheEvictionService.evictTopicProgress(userId);
 
     }
 
@@ -82,17 +86,28 @@ public class TopicProgressServiceImpl extends BaseService implements TopicProgre
                 ));
 
         List<String> courseIds = completedTopicsByCourse.keySet().stream().toList();
-        List<CourseInfo> courseInfos = courseOverviewRepository.findByCourseIdIn(courseIds);
-        Map<String, CourseInfo> courseInfoMap = courseInfos.stream()
-                .collect(Collectors.toMap(CourseInfo::getCourseId, ci -> ci));
+
+        List<CourseOverview> courses = new ArrayList<>();
+        courseIds
+                .forEach(courseId -> {
+                    CourseOverview courseOverview = courseOverviewCacheService.findByCourseId(courseId)
+                            .orElseThrow(() -> new NotFoundException(
+                                    "CourseOverview not found for courseId: " + courseId + ", synchronization needed",
+                                    ENTITY_NOT_FOUND_ERROR)
+                            );
+                    courses.add(courseOverview);
+                });
+
+        Map<String, CourseOverview> courseMap = courses.stream()
+                .collect(Collectors.toMap(CourseOverview::getCourseId, ci -> ci));
 
         DashboardRs dashboardRs = new DashboardRs();
         dashboardRs.setUserId(userId);
         completedTopicsByCourse.forEach((key, value) -> {
             DashboardCourseInfoRs courseInfoRs = DashboardCourseInfoRs.builder()
                     .courseId(key)
-                    .courseName(courseInfoMap.get(key).getCourseName())
-                    .totalTopics(courseInfoMap.get(key).getTotalTopics())
+                    .courseName(courseMap.get(key).getCourseName())
+                    .totalTopics(courseMap.get(key).getTotalTopics())
                     .completedTopics(value)
                     .build();
             dashboardRs.getCourses().add(courseInfoRs);

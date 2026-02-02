@@ -14,31 +14,29 @@ public class AIInsightServiceImpl extends BaseService implements AIInsightServic
     private final AIInsightCacheService cacheService;
     private final ProgressChangeDetector changeDetector;
 
-    /**
-     * Получить инсайт
-     */
     @Override
     public AIInsightResponse getInsight(String userId) {
         log.info("Getting AI insight for user: {}", userId);
 
-        AIInsightResponse insight = cacheService.getInsight(userId);
+        AIInsightResponse cachedInsight = cacheService.getCachedInsight(userId);
 
-        boolean hasChanges = changeDetector.hasChanges(userId, insight.getGeneratedAt());
-
-        if (hasChanges) {
-            log.info("Changes detected, regenerating");
-            cacheService.evictInsight(userId);
-            insight = cacheService.getInsight(userId);
-        } else {
-            log.info("No changes, returning cached insight");
+        if (cachedInsight == null) {
+            log.info("No cached insight found, generating new one");
+            return cacheService.generateAndCache(userId);
         }
 
-        return insight;
+        log.info("Found cached insight from: {}", cachedInsight.getGeneratedAt());
+        boolean hasChanges = changeDetector.hasChanges(userId, cachedInsight.getGeneratedAt());
+
+        if (hasChanges) {
+            log.info("Changes detected since {}, regenerating", cachedInsight.getGeneratedAt());
+            return cacheService.generateAndCache(userId);
+        }
+
+        log.info("No changes since {}, returning cached insight", cachedInsight.getGeneratedAt());
+        return cachedInsight;
     }
 
-    /**
-     * Инвалидация кэша (вызывается при значимых изменениях прогресса)
-     */
     @Override
     public void invalidateCache(String userId) {
         log.info("Invalidating AI insight cache for user: {}", userId);

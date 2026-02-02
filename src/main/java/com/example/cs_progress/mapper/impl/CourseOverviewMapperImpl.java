@@ -3,13 +3,13 @@ package com.example.cs_progress.mapper.impl;
 import com.example.cs_common.dto.common.CourseOverviewDto;
 import com.example.cs_common.dto.common.TagCountDto;
 import com.example.cs_common.dto.common.TagTopicCountDto;
-import com.example.cs_common.dto.common.TaskTopicCountDto;
+import com.example.cs_common.dto.common.TopicOverviewDto;
 import com.example.cs_common.util.BaseMapper;
 import com.example.cs_progress.mapper.CourseOverviewMapper;
 import com.example.cs_progress.model.entity.CourseOverview;
 import com.example.cs_progress.model.entity.TagCount;
 import com.example.cs_progress.model.entity.TagTopicCount;
-import com.example.cs_progress.model.entity.TaskTopicCount;
+import com.example.cs_progress.model.entity.TopicOverview;
 import lombok.NonNull;
 import org.springframework.stereotype.Component;
 
@@ -27,9 +27,9 @@ public class CourseOverviewMapperImpl extends BaseMapper implements CourseOvervi
                 .courseName(courseOverviewDto.getCourseName())
                 .totalTopics(courseOverviewDto.getTotalTopics())
                 .build();
-        courseOverview.setTaskTopicCounts(
-                courseOverviewDto.getTaskTopicCounts().stream()
-                        .map(taskTopicCountDto -> toTaskTopicCount(taskTopicCountDto, courseOverview))
+        courseOverview.setTopicOverviews(
+                courseOverviewDto.getTopicOverviewDtos().stream()
+                        .map(topicOverviewDto -> toTaskTopicCount(topicOverviewDto, courseOverview))
                         .toList());
         courseOverview.setTagCounts(
                 courseOverviewDto.getTagCounts().stream()
@@ -38,9 +38,10 @@ public class CourseOverviewMapperImpl extends BaseMapper implements CourseOvervi
         return courseOverview;
     }
 
-    private TaskTopicCount toTaskTopicCount(TaskTopicCountDto dto, CourseOverview courseOverview) {
-        return TaskTopicCount.builder()
+    private TopicOverview toTaskTopicCount(TopicOverviewDto dto, CourseOverview courseOverview) {
+        return TopicOverview.builder()
                 .topicId(dto.getTopicId())
+                .topicName(dto.getTopicName())
                 .count(dto.getCount())
                 .courseOverview(courseOverview)
                 .build();

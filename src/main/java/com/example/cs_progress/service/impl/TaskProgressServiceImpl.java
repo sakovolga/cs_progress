@@ -145,6 +145,7 @@ public class TaskProgressServiceImpl extends BaseService implements TaskProgress
         taskProgressRepository.save(taskProgress);
 
         cacheEvictionService.evictTopicProgress(taskProgress.getUserId());
+        cacheEvictionService.evictAIInsights(taskProgress.getUserId());
 
         if (!previousStatus.equals(TaskStatus.SOLVED)) {
             tagProgressService.processTagsFromCompletedTask(

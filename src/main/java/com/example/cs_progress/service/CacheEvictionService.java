@@ -5,4 +5,6 @@ public interface CacheEvictionService {
     void evictTopicProgress(String userId);
 
     void evictAIInsights(String userId);
+
+    void evictCourseOverview(String courseId);
 }

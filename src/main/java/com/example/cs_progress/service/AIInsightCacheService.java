@@ -4,9 +4,9 @@ import com.example.cs_common.dto.analitics.AIInsightResponse;
 
 public interface AIInsightCacheService {
 
-    AIInsightResponse getInsight(String userId);
+    AIInsightResponse getCachedInsight(String userId);
 
-    AIInsightResponse putInsightInCache(String userId, AIInsightResponse insight);
+    AIInsightResponse generateAndCache(String userId);
 
     void evictInsight(String userId);
 }
