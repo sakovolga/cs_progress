@@ -9,10 +9,8 @@ import java.time.LocalDateTime;
 @Builder
 public class TopicSummary {
 
-    private String topicId;
-    private String topicTitle; // получить из content service или передать
-    private String courseId;
-    private String courseTitle; // получить из content service или передать
+    private String topicTitle;
+    private String courseTitle;
 
     // Метрики по задачам
     private Integer completedTasks;

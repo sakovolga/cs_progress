@@ -10,7 +10,6 @@ import com.example.cs_progress.model.entity.CourseOverview;
 import com.example.cs_progress.model.entity.TagTopicProgress;
 import com.example.cs_progress.model.entity.TopicOverview;
 import com.example.cs_progress.model.entity.TopicProgress;
-import com.example.cs_progress.repository.TagProgressRepository;
 import com.example.cs_progress.repository.TagTopicProgressRepository;
 import com.example.cs_progress.repository.TopicProgressRepository;
 import com.example.cs_progress.service.CourseOverviewCacheService;
@@ -34,7 +33,6 @@ import static com.example.cs_common.exception.error.SystemError.ENTITY_NOT_FOUND
 public class PromptDataCollectorServiceImpl extends BaseService implements PromptDataCollectorService {
 
     private final TopicProgressRepository topicProgressRepository;
-    private final TagProgressRepository tagProgressRepository;
     private final TagTopicProgressRepository tagTopicProgressRepository;
     private final CourseOverviewCacheService courseOverviewCacheService;
 
@@ -220,7 +218,6 @@ public class PromptDataCollectorServiceImpl extends BaseService implements Promp
      * Вычислить текущий streak
      */
     private Integer calculateStreak(String userId) {
-        // Получаем уникальные даты активности
         Set<LocalDate> activityDates = topicProgressRepository
                 .findByUserId(userId)
                 .stream()
@@ -240,7 +237,6 @@ public class PromptDataCollectorServiceImpl extends BaseService implements Promp
             if (activityDates.contains(checkDate)) {
                 streak++;
             } else if (i > 0) {
-                // Пропуск = конец streak
                 break;
             }
         }
@@ -258,9 +254,7 @@ public class PromptDataCollectorServiceImpl extends BaseService implements Promp
                         ENTITY_NOT_FOUND_ERROR));
 
         return TopicSummary.builder()
-                .topicId(topic.getTopicId())
                 .topicTitle(getTopicTitle(courseOverview, topic.getTopicId()))
-                .courseId(topic.getCourseId())
                 .courseTitle(courseOverview.getCourseName())
                 .completedTasks(topic.getCompletedTasks())
                 .totalTasks(topic.getTotalTasks())
@@ -291,7 +285,6 @@ public class PromptDataCollectorServiceImpl extends BaseService implements Promp
                                 "synchronization needed", ENTITY_NOT_FOUND_ERROR));
         return SkillSummary.builder()
                 .skillName(ttp.getTagProgress().getTagName())
-                .topicId(ttp.getTopicId())
                 .topicTitle(getTopicTitle(courseOverview, ttp.getTopicId()))
                 .progressInTopic(ttp.getProgressInTopic())
                 .topicLastActivity(ttp.getUpdatedAt())

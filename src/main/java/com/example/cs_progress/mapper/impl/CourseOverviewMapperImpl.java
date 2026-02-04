@@ -29,7 +29,7 @@ public class CourseOverviewMapperImpl extends BaseMapper implements CourseOvervi
                 .build();
         courseOverview.setTopicOverviews(
                 courseOverviewDto.getTopicOverviewDtos().stream()
-                        .map(topicOverviewDto -> toTaskTopicCount(topicOverviewDto, courseOverview))
+                        .map(topicOverviewDto -> toTopicOverview(topicOverviewDto, courseOverview))
                         .toList());
         courseOverview.setTagCounts(
                 courseOverviewDto.getTagCounts().stream()
@@ -38,11 +38,18 @@ public class CourseOverviewMapperImpl extends BaseMapper implements CourseOvervi
         return courseOverview;
     }
 
-    private TopicOverview toTaskTopicCount(TopicOverviewDto dto, CourseOverview courseOverview) {
+    private TopicOverview toTopicOverview(TopicOverviewDto dto, CourseOverview courseOverview) {
         return TopicOverview.builder()
                 .topicId(dto.getTopicId())
                 .topicName(dto.getTopicName())
                 .count(dto.getCount())
+                .orderIndex(dto.getOrderIndex())
+                .parentId(dto.getParentId())
+                .parentName(dto.getParentName())
+                .parentOrder(dto.getParentOrder())
+                .grandparentId(dto.getGrandparentId())
+                .grandparentName(dto.getGrandparentName())
+                .grandparentOrder(dto.getParentOrder())
                 .courseOverview(courseOverview)
                 .build();
     }

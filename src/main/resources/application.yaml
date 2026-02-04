@@ -7,15 +7,29 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      auto-commit: false  # ← ВАЖНО для батчинга!
+      data-source-properties:
+        reWriteBatchedInserts: true  # ← Для оптимизации PostgreSQL
   
   jpa:
+    open-in-view: false
     hibernate:
-      ddl-auto: create # create, update, validate, none
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        generate_statistics: true
+        jdbc:
+          batch_size: 50
+          order_inserts: true
+          order_updates: true
+          batch_versioned_data: true
+        connection:
+          provider_disables_autocommit: true  # ← ВАЖНО для Hibernate
+        current_session_context_class: thread  # ← Для правильного управления сессией
         
   ai:
     openai:

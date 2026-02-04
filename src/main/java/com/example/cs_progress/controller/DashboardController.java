@@ -2,7 +2,7 @@ package com.example.cs_progress.controller;
 
 import com.example.cs_common.dto.response.DashboardRs;
 import com.example.cs_common.util.BaseController;
-import com.example.cs_progress.service.TopicProgressService;
+import com.example.cs_progress.service.DashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,12 +14,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/dashboard")
 public class DashboardController extends BaseController {
 
-    private final TopicProgressService topicProgressService;
+    private final DashboardService dashboardService;
 
     @GetMapping
     public DashboardRs getDashboard(@RequestParam String userId) {
         log.info("Request to get dashboard for userId: {}", userId);
 
-        return topicProgressService.getUserDashboard(userId);
+        return dashboardService.getUserDashboard(userId);
     }
 }

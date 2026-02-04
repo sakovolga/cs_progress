@@ -14,6 +14,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 import java.util.HashSet;
 import java.util.Objects;
@@ -35,11 +38,9 @@ public class TagCount extends IdentifiableEntity {
     @Column(name = "tag_name")
     private String tagName;
 
-    @OneToMany(
-            mappedBy = "tagCount",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true
-    )
+    @OneToMany(mappedBy = "tagCount")  // ← БЕЗ cascade!
+    @BatchSize(size = 50)  // ← ДОБАВИТЬ
+    @Fetch(FetchMode.SUBSELECT)  // ← ДОБАВИТЬ
     @Builder.Default
     private Set<TagTopicCount> topicCounts = new HashSet<>();
 
