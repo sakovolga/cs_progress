@@ -12,6 +12,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -37,19 +40,15 @@ public class CourseOverview extends IdentifiableEntity{
     @Column(name = "total_topics")
     private Integer totalTopics;
 
-    @OneToMany(
-            mappedBy = "courseOverview",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true
-    )
+    @OneToMany(mappedBy = "courseOverview")  // ← БЕЗ cascade!
+    @BatchSize(size = 50)  // ← ДОБАВИТЬ для N+1
+    @Fetch(FetchMode.SUBSELECT)  // ← ДОБАВИТЬ
     @Builder.Default
     private List<TopicOverview> topicOverviews = new ArrayList<>();
 
-    @OneToMany(
-            mappedBy = "courseOverview",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true
-    )
+    @OneToMany(mappedBy = "courseOverview")  // ← БЕЗ cascade!
+    @BatchSize(size = 50)  // ← ДОБАВИТЬ
+    @Fetch(FetchMode.SUBSELECT)  // ← ДОБАВИТЬ
     @Builder.Default
     private Set<TagCount> tagCounts = new HashSet<>();
 

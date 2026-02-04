@@ -33,7 +33,34 @@ public class TopicOverview extends IdentifiableEntity {
 
     @Column(name = "count")
     @Builder.Default
-    private Integer count = 0;
+    private Integer count = 0; //Number of tasks in the topic
+
+    // ========== Иерархия (3 уровня) ==========
+
+    // Дедушка (уровень 0)
+    @Column(name = "grandparent_id")
+    private String grandparentId;
+
+    @Column(name = "grandparent_name")
+    private String grandparentName;
+
+    @Column(name = "grandparent_order")  // ← Порядок дедушки!
+    private Integer grandparentOrder;
+
+    // Родитель (уровень 1)
+    @Column(name = "parent_id")
+    private String parentId;
+
+    @Column(name = "parent_name")
+    private String parentName;
+
+    @Column(name = "parent_order")  // ← Порядок родителя!
+    private Integer parentOrder;
+
+    // Сам топик (уровень 2 - листья)
+    @Column(name = "order_index", nullable = false)
+    @Builder.Default
+    private Integer orderIndex = 0;
 
     public void incrementCount() {
         this.count += 1;

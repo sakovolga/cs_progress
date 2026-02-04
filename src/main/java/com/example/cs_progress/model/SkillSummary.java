@@ -9,13 +9,10 @@ import java.time.LocalDateTime;
 @Builder
 public class SkillSummary {
 
-    private String skillName; // название навыка (tag)
-    private String topicId;
-    private String topicTitle; // в каком топике этот навык
+    private String skillName;
+    private String topicTitle;
 
-    // Прогресс навыка в этом топике
     private Double progressInTopic;
 
-    // Активность топика
     private LocalDateTime topicLastActivity;
 }
