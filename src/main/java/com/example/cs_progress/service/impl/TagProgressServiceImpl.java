@@ -92,7 +92,7 @@ public class TagProgressServiceImpl extends BaseService implements TagProgressSe
             TagProgress tagProgress = existingTagProgressMap.get(tagName);
 
             if (tagProgress != null) {
-                updateExistingTagProgress(courseId, tagProgress, topicId, isCorrect, isTaskCompletion);
+                updateExistingTagProgress(courseId, tagProgress, topicId, isTaskCompletion);
             } else {
                 createNewTagProgress(courseId, topicId, userId, tagName, isCorrect, isTaskCompletion);
             }
@@ -117,14 +117,14 @@ public class TagProgressServiceImpl extends BaseService implements TagProgressSe
     private void updateExistingTagProgress(@NonNull final String courseId,
                                            @NonNull final TagProgress tagProgress,
                                            @NonNull final String topicId,
-                                           final Boolean isCorrect,
+//                                           final Boolean isCorrect,
                                            final Boolean isTaskCompletion) {
         TagTopicProgress tagTopicProgress = findOrCreateTagTopicProgress(courseId, tagProgress, topicId);
 
         // Обработка теста
-        if (isCorrect != null) {
-            updateTestMetrics(tagTopicProgress, tagProgress, isCorrect);
-        }
+//        if (isCorrect != null) {
+//            updateTestMetrics(tagTopicProgress, tagProgress, isCorrect);
+//        }
 
         // Обработка таски
         if (isTaskCompletion != null && isTaskCompletion) {
@@ -170,20 +170,20 @@ public class TagProgressServiceImpl extends BaseService implements TagProgressSe
     /**
      * Обновить метрики теста
      */
-    private void updateTestMetrics(@NonNull final TagTopicProgress tagTopicProgress,
-                                   @NonNull final TagProgress tagProgress,
-                                   final boolean isCorrect) {
-        log.debug("Updating test metrics for tag: {} in topic: {}, isCorrect: {}",
-                tagProgress.getTagName(), tagTopicProgress.getTopicId(), isCorrect);
-
-        if (isCorrect) {
-            tagTopicProgress.incrementCorrectTestAnswers();
-            tagProgress.recalculateCorrectTestAnswers();
-        } else {
-            tagTopicProgress.incrementQuestionsAnswered();
-            tagProgress.recalculateAnsweredTestQuestions();
-        }
-    }
+//    private void updateTestMetrics(@NonNull final TagTopicProgress tagTopicProgress,
+//                                   @NonNull final TagProgress tagProgress,
+//                                   final boolean isCorrect) {
+//        log.debug("Updating test metrics for tag: {} in topic: {}, isCorrect: {}",
+//                tagProgress.getTagName(), tagTopicProgress.getTopicId(), isCorrect);
+//
+//        if (isCorrect) {
+//            tagTopicProgress.incrementCorrectTestAnswers();
+//            tagProgress.recalculateCorrectTestAnswers();
+//        } else {
+//            tagTopicProgress.incrementQuestionsAnswered();
+//            tagProgress.recalculateAnsweredTestQuestions();
+//        }
+//    }
 
     /**
      * Обновить метрики таски
@@ -260,7 +260,7 @@ public class TagProgressServiceImpl extends BaseService implements TagProgressSe
             TagTopicProgress tagTopicProgress = createTagTopicProgress(tagProgress, topicCount);
 
             if (activeTopicId.equals(topicCount.getTopicId())) {
-                applyActivityToTopicProgress(tagTopicProgress, tagProgress, isCorrect, isTaskCompletion);
+                applyActivityToTopicProgress(tagTopicProgress, tagProgress, isTaskCompletion);
             }
 
             tagProgress.getTopicProgresses().add(tagTopicProgress);
@@ -284,12 +284,12 @@ public class TagProgressServiceImpl extends BaseService implements TagProgressSe
      */
     private void applyActivityToTopicProgress(@NonNull final TagTopicProgress tagTopicProgress,
                                               @NonNull final TagProgress tagProgress,
-                                              final Boolean isCorrect,
+//                                              final Boolean isCorrect,
                                               final Boolean isTaskCompletion) {
         // Обработка теста
-        if (isCorrect != null) {
-            updateTestMetrics(tagTopicProgress, tagProgress, isCorrect);
-        }
+//        if (isCorrect != null) {
+//            updateTestMetrics(tagTopicProgress, tagProgress, isCorrect);
+//        }
 
         // Обработка таски
         if (isTaskCompletion != null && isTaskCompletion) {

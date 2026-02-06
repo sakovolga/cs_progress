@@ -1,6 +1,8 @@
 package com.example.cs_progress.controller;
 
 import com.example.cs_common.dto.response.DashboardRs;
+import com.example.cs_common.dto.response.DashboardTagsTabRs;
+import com.example.cs_common.dto.response.DashboardTopicsTabRs;
 import com.example.cs_common.util.BaseController;
 import com.example.cs_progress.service.DashboardService;
 import lombok.RequiredArgsConstructor;
@@ -21,5 +23,21 @@ public class DashboardController extends BaseController {
         log.info("Request to get dashboard for userId: {}", userId);
 
         return dashboardService.getUserDashboard(userId);
+    }
+
+    @GetMapping("/topics-tab")
+    public DashboardTopicsTabRs getDashboardTopicsTab(@RequestParam String userId,
+                                                      @RequestParam String courseId) {
+        log.info("Request to get dashboard topics tab for userId: {} and courseId: {}", userId, courseId);
+
+        return dashboardService.getUserDashboardTopicsTab(userId, courseId);
+    }
+
+    @GetMapping("/tags-tab")
+    public DashboardTagsTabRs getDashboardTagsTab(@RequestParam String userId,
+                                                  @RequestParam String courseId) {
+        log.info("Request to get dashboard tags tab for userId: {} and courseId: {}", userId, courseId);
+
+        return dashboardService.getUserDashboardTagsTab(userId, courseId);
     }
 }

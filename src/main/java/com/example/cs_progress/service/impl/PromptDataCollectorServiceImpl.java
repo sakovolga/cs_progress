@@ -162,15 +162,15 @@ public class PromptDataCollectorServiceImpl extends BaseService implements Promp
 
     /**
      * Топ-3 лучших навыка в контексте топиков
-     * Сортировка: progressInTopic DESC, topicLastActivity DESC
+     * Сортировка: TaskCompletionRate DESC, topicLastActivity DESC
      */
     private List<SkillSummary> getBestSkills(List<TagTopicProgress> allTagTopicProgresses) {
 
         return allTagTopicProgresses.stream()
-                .filter(ttp -> ttp.getProgressInTopic() != null)
+                .filter(ttp -> ttp.getTaskCompletionRate() != null)
                 .filter(TagTopicProgress::hasActivity)
                 .sorted(Comparator
-                        .comparing(TagTopicProgress::getProgressInTopic).reversed()
+                        .comparing(TagTopicProgress::getTaskCompletionRate).reversed()
                         .thenComparing(TagTopicProgress::getUpdatedAt,
                                 Comparator.nullsLast(Comparator.reverseOrder())))
                 .limit(3)
@@ -180,16 +180,16 @@ public class PromptDataCollectorServiceImpl extends BaseService implements Promp
 
     /**
      * Топ-3 слабых навыка в контексте топиков
-     * Сортировка: progressInTopic ASC, topicLastActivity DESC
+     * Сортировка: TaskCompletionRate ASC, topicLastActivity DESC
      */
     private List<SkillSummary> getWeakSkills(List<TagTopicProgress> allTagTopicProgresses) {
 
         return allTagTopicProgresses.stream()
-                .filter(ttp -> ttp.getProgressInTopic() != null)
+                .filter(ttp -> ttp.getTaskCompletionRate() != null)
                 .filter(TagTopicProgress::hasActivity)
-                .filter(ttp -> ttp.getProgressInTopic() < 60.0) // только слабые
+                .filter(ttp -> ttp.getTaskCompletionRate() < 60.0) // только слабые
                 .sorted(Comparator
-                        .comparing(TagTopicProgress::getProgressInTopic)
+                        .comparing(TagTopicProgress::getTaskCompletionRate)
                         .thenComparing(TagTopicProgress::getUpdatedAt,
                                 Comparator.nullsLast(Comparator.reverseOrder())))
                 .limit(3)
@@ -286,7 +286,7 @@ public class PromptDataCollectorServiceImpl extends BaseService implements Promp
         return SkillSummary.builder()
                 .skillName(ttp.getTagProgress().getTagName())
                 .topicTitle(getTopicTitle(courseOverview, ttp.getTopicId()))
-                .progressInTopic(ttp.getProgressInTopic())
+                .taskCompletionRate(ttp.getTaskCompletionRate())
                 .topicLastActivity(ttp.getUpdatedAt())
                 .build();
     }
