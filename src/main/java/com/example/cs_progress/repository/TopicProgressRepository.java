@@ -1,5 +1,6 @@
 package com.example.cs_progress.repository;
 
+import com.example.cs_common.dto.response.DashboardTopicProgressRs;
 import com.example.cs_common.enums.TopicStatus;
 import com.example.cs_progress.model.entity.TopicProgress;
 import org.springframework.cache.annotation.Cacheable;
@@ -15,8 +16,6 @@ import java.util.Optional;
 @Repository
 public interface TopicProgressRepository extends JpaRepository<TopicProgress, String> {
 
-    // ========== Основные запросы ==========
-
     Optional<TopicProgress> findByUserIdAndTopicId(String userId, String topicId);
 
     @Cacheable("topic-progress")
@@ -28,36 +27,49 @@ public interface TopicProgressRepository extends JpaRepository<TopicProgress, St
             LocalDateTime after
     );
 
-    List<TopicProgress> findByUserIdAndCourseId(String userId, String courseId);
-
-    // ========== Для дашбордов ==========
-
-    @Query("SELECT tp FROM TopicProgress tp " +
-            "WHERE tp.userId = :userId " +
-            "ORDER BY tp.courseId, tp.lastActivity DESC")
-    List<TopicProgress> findAllByUserIdOrderedByActivity(@Param("userId") String userId);
-
-    @Query("SELECT tp FROM TopicProgress tp " +
-            "WHERE tp.userId = :userId AND tp.courseId = :courseId " +
-            "ORDER BY tp.topicId")
-    List<TopicProgress> findByUserIdAndCourseIdOrdered(
+    @Query("""
+        SELECT new com.example.cs_common.dto.response.DashboardTopicProgressRs(
+            tp.topicId,
+            tp.bestTestScorePercentage,
+            tp.taskCompletionPercentage,
+            tp.status
+        )
+        FROM TopicProgress tp
+        WHERE tp.userId = :userId 
+        AND tp.courseId = :courseId
+    """)
+    List<DashboardTopicProgressRs> findByUserIdAndCourseId(
             @Param("userId") String userId,
             @Param("courseId") String courseId
     );
+    // ========== Для дашбордов ==========
+
+//    @Query("SELECT tp FROM TopicProgress tp " +
+//            "WHERE tp.userId = :userId " +
+//            "ORDER BY tp.courseId, tp.lastActivity DESC")
+//    List<TopicProgress> findAllByUserIdOrderedByActivity(@Param("userId") String userId);
+
+//    @Query("SELECT tp FROM TopicProgress tp " +
+//            "WHERE tp.userId = :userId AND tp.courseId = :courseId " +
+//            "ORDER BY tp.topicId")
+//    List<TopicProgress> findByUserIdAndCourseIdOrdered(
+//            @Param("userId") String userId,
+//            @Param("courseId") String courseId
+//    );
 
     // ========== Статистика ==========
 
-    @Query("SELECT COUNT(tp) FROM TopicProgress tp " +
-            "WHERE tp.userId = :userId AND tp.courseId = :courseId AND tp.status = :status")
-    long countByUserIdAndCourseIdAndStatus(
-            @Param("userId") String userId,
-            @Param("courseId") String courseId,
-            @Param("status") TopicStatus status
-    );
-
-    @Query("SELECT COUNT(tp) FROM TopicProgress tp " +
-            "WHERE tp.userId = :userId AND tp.status = 'COMPLETED'")
-    long countCompletedTopics(@Param("userId") String userId);
+//    @Query("SELECT COUNT(tp) FROM TopicProgress tp " +
+//            "WHERE tp.userId = :userId AND tp.courseId = :courseId AND tp.status = :status")
+//    long countByUserIdAndCourseIdAndStatus(
+//            @Param("userId") String userId,
+//            @Param("courseId") String courseId,
+//            @Param("status") TopicStatus status
+//    );
+//
+//    @Query("SELECT COUNT(tp) FROM TopicProgress tp " +
+//            "WHERE tp.userId = :userId AND tp.status = 'COMPLETED'")
+//    long countCompletedTopics(@Param("userId") String userId);
 
     // ========== Для рекомендаций ==========
 

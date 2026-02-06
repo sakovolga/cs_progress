@@ -1,6 +1,5 @@
 package com.example.cs_progress.model.entity;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
@@ -40,15 +39,15 @@ public class CourseOverview extends IdentifiableEntity{
     @Column(name = "total_topics")
     private Integer totalTopics;
 
-    @OneToMany(mappedBy = "courseOverview")  // ← БЕЗ cascade!
-    @BatchSize(size = 50)  // ← ДОБАВИТЬ для N+1
-    @Fetch(FetchMode.SUBSELECT)  // ← ДОБАВИТЬ
+    @OneToMany(mappedBy = "courseOverview")
+    @BatchSize(size = 50)
+    @Fetch(FetchMode.SUBSELECT)
     @Builder.Default
     private List<TopicOverview> topicOverviews = new ArrayList<>();
 
-    @OneToMany(mappedBy = "courseOverview")  // ← БЕЗ cascade!
-    @BatchSize(size = 50)  // ← ДОБАВИТЬ
-    @Fetch(FetchMode.SUBSELECT)  // ← ДОБАВИТЬ
+    @OneToMany(mappedBy = "courseOverview")
+    @BatchSize(size = 50)
+    @Fetch(FetchMode.SUBSELECT)
     @Builder.Default
     private Set<TagCount> tagCounts = new HashSet<>();
 

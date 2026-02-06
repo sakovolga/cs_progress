@@ -10,7 +10,7 @@ import java.util.Optional;
 @Repository
 public interface CourseOverviewRepository extends JpaRepository<CourseOverview, String> {
 
-    @EntityGraph(attributePaths = {"topicOverviews", "tagCounts", "tagCounts.topicCounts"})
+    @EntityGraph(attributePaths = {"topicOverviews"})
     Optional<CourseOverview> findByCourseId(String courseId);
 
     void deleteByCourseId(String courseId);

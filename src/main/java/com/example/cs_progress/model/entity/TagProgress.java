@@ -43,32 +43,17 @@ public class TagProgress extends IdentifiableEntity {
     @Column(name = "resolved_tasks")
     private Integer resolvedTasks = 0;
 
-    @Column(name = "answered_test_questions")
-    @Builder.Default
-    private Integer answeredTestQuestions = 0;
-
-    @Column(name = "correct_test_answers")
-    @Builder.Default
-    private Integer correctTestAnswers = 0;
-
-    @Column(name = "strength_score")
-    @Builder.Default
-    private Double strengthScore = 0.0; // вычислять средний процент тасок и тестов с учетом количества тем, чтобы пользователь не пропускал тесты
-
-    // ========== Завершение ==========
-
-//    @Column(name = "is_completed")
+//    @Column(name = "answered_test_questions")
 //    @Builder.Default
-//    private Boolean isCompleted = false;
+//    private Integer answeredTestQuestions = 0;
 
-//    @Column(name = "completed_at")
-//    private LocalDateTime completedAt;
-//
-//    @Column(name = "completion_type")
-//    @Enumerated(EnumType.STRING)
-//    private CompletionType completionType;
+//    @Column(name = "correct_test_answers")
+//    @Builder.Default
+//    private Integer correctTestAnswers = 0;
 
-// ========== Временные метки ==========
+//    @Column(name = "strength_score")
+//    @Builder.Default
+//    private Double strengthScore = 0.0; // вычислять средний процент тасок и тестов с учетом количества тем, чтобы пользователь не пропускал тесты
 
     @Column(name = "first_activity")
     private LocalDateTime firstActivity;
@@ -94,40 +79,39 @@ public class TagProgress extends IdentifiableEntity {
 
     // ========== Бизнес-методы ==========
 
-    public void recalculateCorrectTestAnswers() {
-        this.correctTestAnswers = topicProgresses.stream()
-                .mapToInt(TagTopicProgress::getCorrectTestAnswers)
-                .sum();
-        this.answeredTestQuestions = topicProgresses.stream()
-                .mapToInt(TagTopicProgress::getTestQuestionsAnswered)
-                .sum();
-        recalculateStrengthScore();
-    }
-
-    public void recalculateAnsweredTestQuestions() {
-        this.answeredTestQuestions = topicProgresses.stream()
-                .mapToInt(TagTopicProgress::getTestQuestionsAnswered)
-                .sum();
-        recalculateStrengthScore();
-    }
-
-    private void recalculateStrengthScore() {
-        Double testScore = answeredTestQuestions > 0
-                ? (double) correctTestAnswers / answeredTestQuestions * 100.0
-                : 0.0;
-
-        Double taskScore = totalTasks > 0
-                ? (double) resolvedTasks / totalTasks * 100.0
-                : 0.0;
-
-        this.strengthScore = (testScore + taskScore) / 2.0;
-    }
+//    public void recalculateCorrectTestAnswers() {
+//        this.correctTestAnswers = topicProgresses.stream()
+//                .mapToInt(TagTopicProgress::getCorrectTestAnswers)
+//                .sum();
+//        this.answeredTestQuestions = topicProgresses.stream()
+//                .mapToInt(TagTopicProgress::getTestQuestionsAnswered)
+//                .sum();
+//        recalculateStrengthScore();
+//    }
+//
+//    public void recalculateAnsweredTestQuestions() {
+//        this.answeredTestQuestions = topicProgresses.stream()
+//                .mapToInt(TagTopicProgress::getTestQuestionsAnswered)
+//                .sum();
+//        recalculateStrengthScore();
+//    }
+//
+//    private void recalculateStrengthScore() {
+//        Double testScore = answeredTestQuestions > 0
+//                ? (double) correctTestAnswers / answeredTestQuestions * 100.0
+//                : 0.0;
+//
+//        Double taskScore = totalTasks > 0
+//                ? (double) resolvedTasks / totalTasks * 100.0
+//                : 0.0;
+//
+//        this.strengthScore = (testScore + taskScore) / 2.0;
+//    }
 
     public void recalculateCompletedTasks() {
         this.resolvedTasks = topicProgresses.stream()
                 .mapToInt(TagTopicProgress::getTasksCompleted)
                 .sum();
-        recalculateStrengthScore();
     }
 
 

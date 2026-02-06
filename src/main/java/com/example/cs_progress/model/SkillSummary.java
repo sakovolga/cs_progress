@@ -12,7 +12,7 @@ public class SkillSummary {
     private String skillName;
     private String topicTitle;
 
-    private Double progressInTopic;
+    private Double taskCompletionRate;
 
     private LocalDateTime topicLastActivity;
 }

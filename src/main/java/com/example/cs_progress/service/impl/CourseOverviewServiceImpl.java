@@ -4,10 +4,8 @@ import com.example.cs_common.dto.common.CourseOverviewDto;
 import com.example.cs_common.dto.common.TagCountDto;
 import com.example.cs_common.dto.common.TagTopicCountDto;
 import com.example.cs_common.dto.common.TopicOverviewDto;
-import com.example.cs_common.dto.event.TaskStatsChangedEvent;
 import com.example.cs_common.dto.response.CourseOverviewSynchronizationRs;
 import com.example.cs_common.util.BaseService;
-import com.example.cs_progress.mapper.CourseOverviewMapper;
 import com.example.cs_progress.model.entity.CourseOverview;
 import com.example.cs_progress.repository.CourseOverviewRepository;
 import com.example.cs_progress.repository.TagCountRepository;
@@ -15,8 +13,6 @@ import com.example.cs_progress.repository.TagTopicCountRepository;
 import com.example.cs_progress.repository.TopicOverviewRepository;
 import com.example.cs_progress.service.CacheEvictionService;
 import com.example.cs_progress.service.CourseOverviewService;
-import com.example.cs_progress.service.TagCountService;
-import com.example.cs_progress.service.TopicOverviewService;
 import jakarta.persistence.EntityManager;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -40,37 +36,36 @@ import java.util.UUID;
 public class CourseOverviewServiceImpl extends BaseService implements CourseOverviewService {
 
     private final CourseOverviewRepository courseOverviewRepository;
-    private final TagCountService tagCountService;
-    private final TopicOverviewService topicOverviewService;
-    private final CourseOverviewMapper courseOverviewMapper;
+//    private final TagCountService tagCountService;
+//    private final TopicOverviewService topicOverviewService;
     private final CacheEvictionService cacheEvictionService;
     private final TagTopicCountRepository tagTopicCountRepository;
     private final TagCountRepository tagCountRepository;
     private final TopicOverviewRepository topicOverviewRepository;
     private final EntityManager entityManager;
-    private final DataSource dataSource;
+//    private final DataSource dataSource;
 
-    @Override
-    @Transactional
-    public void handleTaskStatsChangedEvent(@NonNull final TaskStatsChangedEvent event) {
-        log.info(
-                "Handling TaskStatsChangedEvent for courseId: {}, topicId: {}, tagNamesAdded: {}," +
-                        "tagNamesRemoved: {}, isTaskCreated: {}, isTaskDeleted: {}",
-                event.getCourseId(), event.getTopicId(), event.getTagNamesAdded(),
-                event.getTagNamesRemoved(), event.getIsTaskCreated(), event.getIsTaskDeleted()
-        );
-
-        CourseOverview courseOverview = courseOverviewRepository.findByCourseId(event.getCourseId())
-                .orElse(CourseOverview.builder()
-                        .courseId(event.getCourseId())
-                        .build());
-
-        tagCountService.update(event, courseOverview);
-        topicOverviewService.updateTaskTopicCount(event, courseOverview);
-
-        courseOverviewRepository.save(courseOverview);
-        cacheEvictionService.evictCourseOverview(event.getCourseId());
-    }
+//    @Override
+//    @Transactional
+//    public void handleTaskStatsChangedEvent(@NonNull final TaskStatsChangedEvent event) {
+//        log.info(
+//                "Handling TaskStatsChangedEvent for courseId: {}, topicId: {}, tagNamesAdded: {}," +
+//                        "tagNamesRemoved: {}, isTaskCreated: {}, isTaskDeleted: {}",
+//                event.getCourseId(), event.getTopicId(), event.getTagNamesAdded(),
+//                event.getTagNamesRemoved(), event.getIsTaskCreated(), event.getIsTaskDeleted()
+//        );
+//
+//        CourseOverview courseOverview = courseOverviewRepository.findByCourseId(event.getCourseId())
+//                .orElse(CourseOverview.builder()
+//                        .courseId(event.getCourseId())
+//                        .build());
+//
+//        tagCountService.update(event, courseOverview);
+//        topicOverviewService.updateTaskTopicCount(event, courseOverview);
+//
+//        courseOverviewRepository.save(courseOverview);
+//        cacheEvictionService.evictCourseOverview(event.getCourseId());
+//    }
 
     @Override
     @Transactional

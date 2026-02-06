@@ -139,7 +139,7 @@ public class PromptGeneratorServiceImpl extends BaseService implements PromptGen
                     i + 1,
                     skill.getSkillName(),
                     skill.getTopicTitle(),
-                    skill.getProgressInTopic().intValue(),
+                    skill.getTaskCompletionRate().intValue(),
                     formatLastActivity(skill.getTopicLastActivity())
             ));
         }

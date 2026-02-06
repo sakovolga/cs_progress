@@ -17,8 +17,10 @@ public interface TagProgressRepository extends JpaRepository<TagProgress, String
                                                           String userId,
                                                           String courseId);
 
-    List<TagProgress> findByUserId(String userId);
+//    List<TagProgress> findByUserId(String userId);
 
     // Для детектора изменений
     long countByUserIdAndLastActivityAfter(String userId, LocalDateTime after);
+
+    List<TagProgress> findByUserIdAndCourseId(String userId, String courseId);
 }
