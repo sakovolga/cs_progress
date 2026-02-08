@@ -159,7 +159,7 @@ public class DashboardServiceImpl extends BaseService implements DashboardServic
                             .strengthScore(strengthScore)
                             .build();
                 })
-                .sorted(Comparator.comparingDouble(DashboardTagProgressRs::getStrengthScore))
+                .sorted(Comparator.comparingDouble(DashboardTagProgressRs::getStrengthScore).reversed())
                 .toList();
 
         DashboardTagsTabRs result = DashboardTagsTabRs.builder()
