@@ -4,19 +4,14 @@ import com.example.cs_common.dto.response.DashboardCourseInfoRs;
 import com.example.cs_common.dto.response.DashboardRs;
 import com.example.cs_common.dto.response.DashboardTagProgressRs;
 import com.example.cs_common.dto.response.DashboardTagsTabRs;
+import com.example.cs_common.dto.response.DashboardTopicProgressListRs;
 import com.example.cs_common.dto.response.DashboardTopicProgressRs;
-import com.example.cs_common.dto.response.DashboardTopicsTabRs;
-import com.example.cs_common.dto.response.ParentGroupRs;
-import com.example.cs_common.dto.response.TopicGroupRs;
-import com.example.cs_common.dto.response.TopicProgressRs;
-import com.example.cs_common.dto.response.TopicWithProgressRs;
 import com.example.cs_common.enums.TopicStatus;
 import com.example.cs_common.exception.NotFoundException;
 import com.example.cs_common.util.BaseService;
 import com.example.cs_progress.model.entity.CourseOverview;
 import com.example.cs_progress.model.entity.TagCount;
 import com.example.cs_progress.model.entity.TagProgress;
-import com.example.cs_progress.model.entity.TopicOverview;
 import com.example.cs_progress.model.entity.TopicProgress;
 import com.example.cs_progress.repository.TagProgressRepository;
 import com.example.cs_progress.repository.TopicProgressRepository;
@@ -105,165 +100,21 @@ public class DashboardServiceImpl extends BaseService implements DashboardServic
 
     @Override
     @Transactional(readOnly = true)
-    public DashboardTopicsTabRs getUserDashboardTopicsTab(
-            @NonNull String userId,
-            @NonNull String courseId
-    ) {
-        log.info("Getting dashboard topics tab for userId: {}, courseId: {}", userId, courseId);
+    public DashboardTopicProgressListRs getUserDashboardTopicsTab(@NonNull final String userId,
+                                                                  @NonNull final String courseId) {
+        log.info("Getting dashboard topics progress for userId: {}, courseId: {}", userId, courseId);
 
-        // 1. Получаем прогресс
-        Map<String, DashboardTopicProgressRs> progressMap =
-                topicProgressRepository.findByUserIdAndCourseId(userId, courseId)
-                        .stream()
-                        .collect(Collectors.toMap(
-                                DashboardTopicProgressRs::getTopicId,
-                                Function.identity()
-                        ));
+        List<DashboardTopicProgressRs> dashboardTopicProgressList = topicProgressRepository
+                .findByUserIdAndCourseId(userId, courseId);
 
-        log.info("Found {} topic progress records for user", progressMap.size());
-
-        CourseOverview courseOverview = courseOverviewCacheService
-                .findByCourseId(courseId)
-                .orElseThrow(() -> new NotFoundException(
-                        "CourseOverview not found for courseId: " + courseId + ", synchronization needed",
-                        ENTITY_NOT_FOUND_ERROR)
-                );
-
-        log.info("CourseOverview has {} topic overviews", courseOverview.getTopicOverviews().size());
-
-        courseOverview.getTopicOverviews().forEach(topic ->
-                log.info("TopicOverview: topicId={}, topicName={}, parentId={}, parentName={}, grandparentId={}, grandparentName={}",
-                        topic.getTopicId(),
-                        topic.getTopicName(),
-                        topic.getParentId(),
-                        topic.getParentName(),
-                        topic.getGrandparentId(),
-                        topic.getGrandparentName()
-                )
-        );
-
-        List<TopicGroupRs> topicGroups = buildTopicTree(
-                courseOverview.getTopicOverviews(),
-                progressMap
-        );
-
-        // ← ДОБАВЬТЕ ЭТО ЛОГИРОВАНИЕ
-        log.info("Built {} topic groups", topicGroups.size());
-
-        topicGroups.forEach(group -> {
-            log.info("TopicGroup: grandparentName={}, parents count={}",
-                    group.getGrandparentName(),
-                    group.getParents().size()
-            );
-
-            group.getParents().forEach(parent ->
-                    log.info("  ParentGroup: parentName={}, topics count={}",
-                            parent.getParentName(),
-                            parent.getTopics().size()
-                    )
-            );
-        });
-
-        DashboardTopicsTabRs rs = DashboardTopicsTabRs.builder()
-                .courseId(courseId)
+        DashboardTopicProgressListRs rs = DashboardTopicProgressListRs.builder()
                 .userId(userId)
-                .topicGroups(topicGroups)
+                .courseId(courseId)
+                .topicProgressList(dashboardTopicProgressList)
                 .build();
 
-        log.info("Dashboard topics tab constructed successfully");
+        log.info("{} Dashboard topics progress received successfully", rs.getTopicProgressList().size());
         return rs;
-    }
-
-    private List<TopicGroupRs> buildTopicTree(List<TopicOverview> topicOverviews,
-                                              Map<String, DashboardTopicProgressRs> progressMap) {
-        // Группируем по grandparent (null → "ROOT")
-        Map<String, List<TopicOverview>> byGrandparent = topicOverviews.stream()
-                .collect(Collectors.groupingBy(
-                        t -> t.getGrandparentId() != null ? t.getGrandparentId() : "ROOT"
-                ));
-
-        return byGrandparent.entrySet().stream()
-                .map(entry -> {
-                    String grandparentKey = entry.getKey();
-                    List<TopicOverview> topics = entry.getValue();
-                    TopicOverview first = topics.getFirst();
-
-                    // Строим parent groups
-                    List<ParentGroupRs> parents = buildParentGroups(topics, progressMap);
-
-                    // Если grandparent = "ROOT", используем null
-                    boolean isRoot = "ROOT".equals(grandparentKey);
-
-                    return TopicGroupRs.builder()
-                            .grandparentId(isRoot ? null : first.getGrandparentId())
-                            .grandparentName(isRoot ? null : first.getGrandparentName())
-                            .grandparentOrder(isRoot ? null : first.getGrandparentOrder())
-                            .parents(parents)
-                            .build();
-                })
-                // Сортировка: сначала с grandparent, потом без
-                .sorted(Comparator.comparing(
-                        group -> group.getGrandparentOrder() != null ? group.getGrandparentOrder() : Integer.MAX_VALUE
-                ))
-                .toList();
-    }
-
-    private List<ParentGroupRs> buildParentGroups(
-            List<TopicOverview> topics,
-            Map<String, DashboardTopicProgressRs> progressMap
-    ) {
-        // Группируем по parent (null → "ROOT")
-        Map<String, List<TopicOverview>> byParent = topics.stream()
-                .collect(Collectors.groupingBy(
-                        t -> t.getParentId() != null ? t.getParentId() : "ROOT"
-                ));
-
-        return byParent.entrySet().stream()
-                .map(entry -> {
-                    String parentKey = entry.getKey();
-                    List<TopicOverview> parentTopics = entry.getValue();
-                    TopicOverview first = parentTopics.getFirst();
-
-                    boolean isRoot = "ROOT".equals(parentKey);
-
-                    // Строим топики с прогрессом
-                    List<TopicWithProgressRs> topicsWithProgress = parentTopics.stream()
-                            .map(topic -> buildTopicWithProgress(topic, progressMap))
-                            .sorted(Comparator.comparing(TopicWithProgressRs::getOrderIndex))
-                            .toList();
-
-                    return ParentGroupRs.builder()
-                            .parentId(isRoot ? null : first.getParentId())
-                            .parentName(isRoot ? null : first.getParentName())
-                            .parentOrder(isRoot ? null : first.getParentOrder())
-                            .topics(topicsWithProgress)
-                            .build();
-                })
-                // Сортировка: сначала с parent, потом без
-                .sorted(Comparator.comparing(
-                        group -> group.getParentOrder() != null ? group.getParentOrder() : Integer.MAX_VALUE
-                ))
-                .toList();
-    }
-
-    private TopicWithProgressRs buildTopicWithProgress(
-            TopicOverview topic,
-            Map<String, DashboardTopicProgressRs> progressMap
-    ) {
-        DashboardTopicProgressRs progress = progressMap.get(topic.getTopicId());
-
-        return TopicWithProgressRs.builder()
-                .topicId(topic.getTopicId())
-                .topicName(topic.getTopicName())
-                .orderIndex(topic.getOrderIndex())
-                .progress(progress != null ?
-                        TopicProgressRs.builder()
-                                .bestTestScorePercentage(progress.getBestTestScorePercentage())
-                                .taskCompletionPercentage(progress.getTaskCompletionPercentage())
-                                .status(progress.getStatus())
-                                .build()
-                        : null)
-                .build();
     }
 
     @Override
