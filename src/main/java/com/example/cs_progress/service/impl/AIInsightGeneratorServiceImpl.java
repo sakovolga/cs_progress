@@ -57,7 +57,7 @@ public class AIInsightGeneratorServiceImpl extends BaseService implements AIInsi
             insight.setGeneratedAt(generationStartedAt);
 
             long duration = System.currentTimeMillis() - startTime;
-            log.info("[AI GENERATION] Completed in {}ms for user: {}", duration, userId);
+            log.info("[AI GENERATION] Completed in {}ms for user: {}. Insight: {}", duration, userId, insight);
 
             return insight;
 
