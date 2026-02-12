@@ -15,7 +15,6 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class PromptGeneratorServiceImpl extends BaseService implements PromptGeneratorService {
 
     /**
@@ -77,7 +76,7 @@ public class PromptGeneratorServiceImpl extends BaseService implements PromptGen
         // Section 8: AI task
         appendTaskSection(prompt);
 
-        log.debug("Prompt generated, length: {} characters", prompt.length());
+        log.info("Prompt generated: {}", prompt.toString());
 
         return prompt.toString();
     }
