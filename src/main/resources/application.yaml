@@ -109,3 +109,6 @@ app:
       max-retries: 3
       alert-threshold: 50
       cleanup-hours: 48  # Через 48 часов удалять из DLQ
+      
+internal:
+  secret: ${CS_SECRET}
