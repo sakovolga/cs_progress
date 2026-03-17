@@ -44,7 +44,7 @@ public class TestProgressServiceImpl extends BaseService implements TestProgress
     private static final int MAX_NUMBER_OF_TEST_ITEMS = 10;
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public CurrentTestInfoRs getCurrentTestInfo(@NonNull final String userId,
                                                 @NonNull final String courseId, //не используется, но оставлен для возможного будущего использования
                                                 @NonNull final String topicId) {
@@ -64,37 +64,73 @@ public class TestProgressServiceImpl extends BaseService implements TestProgress
         }
 
         List<TestProgress> testProgressList = optionalTestsResult.get().getTestProgresses();
-        TestProgress lastTestProgress = testProgressList.getLast();
-        int currentIndex = lastTestProgress.getTestItemResults().size() - 1;
 
         if (testProgressList.size() == MAX_NUMBER_OF_TEST && allAttemptsUsed(testProgressList)) {
-            log.info("All attempts used for user with id: {} in topic with id: {}", userId, topicId);
+            log.info("All attempts used for user with id: {} in topic with id: {}, resetting for new cycle", userId, topicId);
+
+            TestsResult testsResult = optionalTestsResult.get();
+            testsResult.getTestProgresses().clear();
+            testsResultRepository.save(testsResult);
 
             return CurrentTestInfoRs.builder()
-                    .isAllAttemptsUsed(true)
-                    .bestScore(optionalTestsResult.get().getBestScore())
-                    .build();
-        }
-
-        if (currentIndex == MAX_TEST_ITEM_INDEX && getNumberOfCompletedTests(testProgressList) < MAX_NUMBER_OF_TEST) {
-            log.info("Test attempt completed, user with id={} can start new attempt", userId);
-
-            return CurrentTestInfoRs.builder()
-                    .isTestCompleted(true)
-                    .testScore(lastTestProgress.getScore())
                     .isAllAttemptsUsed(false)
-                    .bestScore(optionalTestsResult.get().getBestScore())
-                    .completedTestIds(getCompletedTestIds(testProgressList))
+                    .isTestCompleted(false)
                     .build();
         }
-        log.info(
-                "Returning current test item index: {} in test with id: {} in attempting: {} " +
-                        "in topic with id: {} in course with id: {} for user with id: {} ",
-                currentIndex, lastTestProgress.getTestId(), testProgressList.size() - 1, topicId, courseId, userId
-        );
+
+        Optional<TestProgress> activeProgressOpt = testProgressList.stream()
+                .filter(tp -> tp.getStatus() != TestStatus.COMPLETED)
+                .findFirst();
+
+        if (activeProgressOpt.isPresent()) {
+            TestProgress activeProgress = activeProgressOpt.get();
+            int currentIndex = activeProgress.getTestItemResults().size() - 1;
+
+            if (currentIndex >= MAX_TEST_ITEM_INDEX) {
+                log.info("Test at/beyond max index for user id={} in topic id={}, treating as completed", userId, topicId);
+
+                activeProgress.updateScore();
+                activeProgress.setStatus(TestStatus.COMPLETED);
+                testsResultRepository.save(optionalTestsResult.get());
+
+                if (testProgressList.size() >= MAX_NUMBER_OF_TEST && allAttemptsUsed(testProgressList)) {
+                    TestsResult testsResult = optionalTestsResult.get();
+                    testsResult.getTestProgresses().clear();
+                    testsResultRepository.save(testsResult);
+                    return CurrentTestInfoRs.builder()
+                            .isAllAttemptsUsed(false)
+                            .isTestCompleted(false)
+                            .build();
+                }
+
+                return CurrentTestInfoRs.builder()
+                        .isTestCompleted(true)
+                        .testScore(activeProgress.getScore())
+                        .isAllAttemptsUsed(false)
+                        .bestScore(optionalTestsResult.get().getBestScore())
+                        .completedTestIds(getCompletedTestIds(testProgressList))
+                        .build();
+            }
+
+            log.info(
+                    "Returning current test item index: {} in test with id: {} in attempting: {} " +
+                            "in topic with id: {} in course with id: {} for user with id: {} ",
+                    currentIndex, activeProgress.getTestId(), testProgressList.size() - 1, topicId, courseId, userId
+            );
+            return CurrentTestInfoRs.builder()
+                    .currentTestId(activeProgress.getTestId())
+                    .currentTestItemIndex(currentIndex)
+                    .build();
+        }
+
+        TestProgress lastCompleted = testProgressList.getLast();
+        log.info("No active test progress for user id={} in topic id={}, returning completed state", userId, topicId);
         return CurrentTestInfoRs.builder()
-                .currentTestId(lastTestProgress.getTestId())
-                .currentTestItemIndex(currentIndex)
+                .isTestCompleted(true)
+                .testScore(lastCompleted.getScore())
+                .isAllAttemptsUsed(false)
+                .bestScore(optionalTestsResult.get().getBestScore())
+                .completedTestIds(getCompletedTestIds(testProgressList))
                 .build();
     }
 
@@ -121,9 +157,6 @@ public class TestProgressServiceImpl extends BaseService implements TestProgress
         TestItemResult testItemResult = testItemResultMapper.toTestItemResult(rq, testProgress);
         if (testProgress != null) {
             testProgress.getTestItemResults().add(testItemResult);
-            if (testProgress.getTestItemResults().size() != MAX_NUMBER_OF_TEST_ITEMS) {
-                throw new IllegalStateException("Cannot finish test before answering all questions");
-            }
             testProgress.updateScore();
             testProgress.setStatus(TestStatus.COMPLETED);
         }
@@ -190,6 +223,16 @@ public class TestProgressServiceImpl extends BaseService implements TestProgress
                 .testItemId(event.getTestItemId())
                 .score(event.getTestItemScore())
                 .build();
+
+        // Если все попытки завершены — сбросить цикл (bestScore в TestsResult сохраняется)
+        boolean allCompleted = !testsResult.getTestProgresses().isEmpty()
+                && testsResult.getTestProgresses().stream()
+                        .allMatch(tp -> tp.getStatus() == TestStatus.COMPLETED);
+        if (allCompleted) {
+            testsResult.getTestProgresses().clear();
+            testsResultRepository.save(testsResult);
+            log.info("All tests completed, resetting cycle for new round. bestScore preserved. userId={}", event.getUserId());
+        }
 
         // Поиск TestProgress для текущего теста
         TestProgress testProgress = testsResult.getTestProgresses().stream()

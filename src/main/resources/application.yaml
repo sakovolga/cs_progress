@@ -21,7 +21,7 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        generate_statistics: true
+        generate_statistics: false
         jdbc:
           batch_size: 50
           order_inserts: true
