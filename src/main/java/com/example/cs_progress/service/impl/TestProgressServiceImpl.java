@@ -35,7 +35,6 @@ public class TestProgressServiceImpl extends BaseService implements TestProgress
     private final TestsResultRepository testsResultRepository;
     private final TestItemResultMapper testItemResultMapper;
     private final TestProgressMapper testProgressMapper;
-    private final AsyncTagProgressHandler asyncTagProgressHandler;
     private final TopicProgressRepository topicProgressRepository;
     private final CacheEvictionService cacheEvictionService;
 
@@ -173,14 +172,6 @@ public class TestProgressServiceImpl extends BaseService implements TestProgress
         cacheEvictionService.evictTopicProgress(rq.getUserId());
 
         TestResultRs rs = testProgressMapper.toTestResultRs(testProgress);
-
-        asyncTagProgressHandler.processTagProgressAsync(
-                rq.getTestItemResolvedRq().getCourseId(),
-                rq.getTestItemResolvedRq().getTopicId(),
-                rq.getUserId(),
-                rq.getTestItemResolvedRq().getTagNames(),
-                rq.getTestItemResolvedRq().getTestItemScore()
-        );
 
         log.info("Test finished: testId={}, score={}", rs.getTestId(), rs.getScore());
         return rs;

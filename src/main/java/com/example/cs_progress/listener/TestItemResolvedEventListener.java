@@ -3,7 +3,6 @@ package com.example.cs_progress.listener;
 import com.example.cs_common.dto.event.TestItemResolvedEvent;
 import com.example.cs_common.exception.NotFoundException;
 import com.example.cs_common.util.BaseListener;
-import com.example.cs_progress.service.TagProgressService;
 import com.example.cs_progress.service.TestProgressService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -15,7 +14,6 @@ import org.springframework.stereotype.Component;
 public class TestItemResolvedEventListener extends BaseListener {
 
     private final TestProgressService testProgressService;
-    private final TagProgressService tagProgressService;
 
     @RabbitListener(queues = "test.item.resolved.queue")
     public void handleTestItemResolved(@Payload TestItemResolvedEvent event) {
@@ -32,30 +30,8 @@ public class TestItemResolvedEventListener extends BaseListener {
         try {
             validateEvent(event);
 
-            // 1. ✅ Обновляем TestProgress (критично - должно быть атомарно)
             testProgressService.processResolvedTestItem(event);
-            log.info("Successfully updated TestProgress for testId={}", event.getTestId());
-
-            // 2. ✅ Обновляем TagProgress (не критично если упадет)
-            if (event.getTagNames() != null && !event.getTagNames().isEmpty()) {
-                try {
-                    tagProgressService.processTagsFromResolvedTestItem(
-                            event.getCourseId(),
-                            event.getTopicId(),
-                            event.getUserId(),
-                            event.getTagNames(),
-                            event.getTestItemScore()
-                    );
-                    log.info("Successfully updated TagProgress for userId={}", event.getUserId());
-                } catch (Exception e) {
-                    log.error("Failed to update TagProgress, but TestProgress was saved", e);
-                }
-            } else {
-                log.info("No tags to process for TagProgress update for testItemId={}", event.getTestItemId());
-            }
-
-            log.info("Successfully processed test item resolved event for testId={}",
-                    event.getTestId());
+            log.info("Successfully processed test item resolved event for testId={}", event.getTestId());
 
         } catch (IllegalArgumentException e) {
             log.error("Invalid test item resolved event: {}", e.getMessage());
