@@ -19,6 +19,8 @@ public interface TaskProgressRepository extends JpaRepository<TaskProgress, Stri
 
     List<TaskProgressSummaryRs> findByUserIdAndTopicId(String userId, String topicId);
 
+    List<TaskProgressSummaryRs> findByUserIdAndTaskIdIn(String userId, List<String> taskIds);
+
     TaskProgressDetailsRs findByUserIdAndTaskId(String userId, String taskId);
 
     @Query("""

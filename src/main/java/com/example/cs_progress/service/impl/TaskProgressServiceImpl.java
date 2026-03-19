@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Collections;
 
 import static com.example.cs_common.exception.error.SystemError.ENTITY_NOT_FOUND_ERROR;
 
@@ -55,6 +56,26 @@ public class TaskProgressServiceImpl extends BaseService implements TaskProgress
                 taskProgressListRs.getTaskProgressRsList().size(), userId, topicId
         );
         return taskProgressListRs;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public TaskProgressListRs getTaskProgressListByTaskIds(@NonNull final String userId,
+                                                           @NonNull final List<String> taskIds) {
+        log.info("Attempting to get task progress list for userId: {} and {} taskIds", userId, taskIds.size());
+
+        if (taskIds.isEmpty()) {
+            return TaskProgressListRs.builder().taskProgressRsList(Collections.emptyList()).build();
+        }
+
+        List<TaskProgressSummaryRs> taskProgressSummaryRsList = taskProgressRepository
+                .findByUserIdAndTaskIdIn(userId, taskIds);
+
+        log.info("{} task progresses received for userId: {} by taskIds", taskProgressSummaryRsList.size(), userId);
+
+        return TaskProgressListRs.builder().
+                taskProgressRsList(taskProgressSummaryRsList)
+                .build();
     }
 
     @Override
@@ -103,7 +124,7 @@ public class TaskProgressServiceImpl extends BaseService implements TaskProgress
 
     @Override
     @Transactional
-    public void saveSnapshot(@NonNull final SnapshotSentEvent event){
+    public void saveSnapshot(@NonNull final SnapshotSentEvent event) {
         log.info("Attempting to save snapshot for task progress with id: {}",
                 event.getTaskProgressId());
 
