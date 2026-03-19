@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/task-progress")
@@ -30,6 +32,14 @@ public class TaskProgressController extends BaseController {
         log.info("Request getTaskProgressListRs for userId: {} and topicId: {}", userId, topicId);
 
         return taskProgressService.getTaskProgressList(userId, topicId);
+    }
+
+    @GetMapping("/by-task-ids")
+    public TaskProgressListRs getTaskProgressListByTaskIds(@RequestParam @NotBlank String userId,
+                                                           @RequestParam List<String> taskIds) {
+        log.info("Request getTaskProgressListByTaskIds for userId: {} and {} taskIds", userId, taskIds.size());
+
+        return taskProgressService.getTaskProgressListByTaskIds(userId, taskIds);
     }
 
     @GetMapping
