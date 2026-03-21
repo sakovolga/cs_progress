@@ -42,8 +42,5 @@ public class TaskCompletedEventListener extends BaseListener {
         if (event.getTaskStatus() == null) {
             throw new IllegalArgumentException("taskStatus cannot be null");
         }
-        if (event.getCodeQualityRating() == null) {
-            throw new IllegalArgumentException("getCodeQualityRating cannot be null");
-        }
     }
 }
