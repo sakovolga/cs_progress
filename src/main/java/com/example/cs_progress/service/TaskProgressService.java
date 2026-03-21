@@ -6,8 +6,6 @@ import com.example.cs_common.dto.request.CodeSnapshotRq;
 import com.example.cs_common.dto.response.TaskProgressAutosaveRs;
 import com.example.cs_common.dto.response.TaskProgressDetailsRs;
 import com.example.cs_common.dto.response.TaskProgressListRs;
-import com.example.cs_common.dto.response.TaskStatusRs;
-
 import java.util.List;
 
 public interface TaskProgressService {
@@ -23,6 +21,4 @@ public interface TaskProgressService {
     void saveSnapshot(SnapshotSentEvent event);
 
     void processTaskCompletedEvent(TaskCompletedEvent event);
-
-    TaskStatusRs getTaskStatus(String taskProgressId);
 }
