@@ -8,6 +8,7 @@ import com.example.cs_progress.repository.CourseOverviewRepository;
 import com.example.cs_progress.repository.TopicOverviewRepository;
 import com.example.cs_progress.repository.TopicProgressRepository;
 import com.example.cs_progress.service.CacheEvictionService;
+import com.example.cs_progress.service.CourseCompletionService;
 import com.example.cs_progress.service.TopicProgressService;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ public class TopicProgressServiceImpl extends BaseService implements TopicProgre
     private final TopicProgressRepository topicProgressRepository;
     private final TopicOverviewRepository topicOverviewRepository;
     private final CacheEvictionService cacheEvictionService;
+    private final CourseCompletionService courseCompletionService;
 
     @Override
     @Transactional
@@ -47,6 +49,7 @@ public class TopicProgressServiceImpl extends BaseService implements TopicProgre
         topicProgress.incrementCompletedTasks();
         topicProgressRepository.save(topicProgress);
         cacheEvictionService.evictTopicProgress(userId);
+        courseCompletionService.checkAndMarkCourseCompleted(userId, courseId);
     }
 
 }
