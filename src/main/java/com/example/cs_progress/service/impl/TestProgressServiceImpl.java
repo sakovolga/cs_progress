@@ -16,6 +16,7 @@ import com.example.cs_progress.model.entity.TopicProgress;
 import com.example.cs_progress.repository.TestsResultRepository;
 import com.example.cs_progress.repository.TopicProgressRepository;
 import com.example.cs_progress.service.CacheEvictionService;
+import com.example.cs_progress.service.CourseCompletionService;
 import com.example.cs_progress.service.TestProgressService;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,7 @@ public class TestProgressServiceImpl extends BaseService implements TestProgress
     private final TestProgressMapper testProgressMapper;
     private final TopicProgressRepository topicProgressRepository;
     private final CacheEvictionService cacheEvictionService;
+    private final CourseCompletionService courseCompletionService;
 
     private static final int MAX_NUMBER_OF_TEST = 3;
     private static final int MAX_TEST_ITEM_INDEX = 9;
@@ -303,5 +305,6 @@ public class TestProgressServiceImpl extends BaseService implements TestProgress
         topicProgress.setBestTestScorePercentage(bestScore);
         topicProgress.updateStatus();
         topicProgressRepository.save(topicProgress);
+        courseCompletionService.checkAndMarkCourseCompleted(userId, courseId);
     }
 }

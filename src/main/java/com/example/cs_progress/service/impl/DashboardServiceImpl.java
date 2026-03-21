@@ -6,15 +6,14 @@ import com.example.cs_common.dto.response.DashboardTagProgressRs;
 import com.example.cs_common.dto.response.DashboardTagsTabRs;
 import com.example.cs_common.dto.response.DashboardTopicProgressListRs;
 import com.example.cs_common.dto.response.DashboardTopicProgressRs;
-import com.example.cs_common.enums.TopicStatus;
 import com.example.cs_common.exception.NotFoundException;
 import com.example.cs_common.util.BaseService;
-import com.example.cs_progress.model.entity.CourseOverview;
 import com.example.cs_progress.model.entity.TagCount;
 import com.example.cs_progress.model.entity.TagProgress;
-import com.example.cs_progress.model.entity.TopicProgress;
 import com.example.cs_progress.repository.TagProgressRepository;
 import com.example.cs_progress.repository.TopicProgressRepository;
+import com.example.cs_progress.repository.UserCourseCompletionRepository;
+import com.example.cs_progress.service.CourseCompletionService;
 import com.example.cs_progress.service.CourseOverviewCacheService;
 import com.example.cs_progress.service.DashboardService;
 import lombok.NonNull;
@@ -22,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -39,63 +38,41 @@ public class DashboardServiceImpl extends BaseService implements DashboardServic
     private final CourseOverviewCacheService courseOverviewCacheService;
     private final TopicProgressRepository topicProgressRepository;
     private final TagProgressRepository tagProgressRepository;
+    private final UserCourseCompletionRepository userCourseCompletionRepository;
+    private final CourseCompletionService courseCompletionService;
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public DashboardRs getUserDashboard(@NonNull final String userId) {
         log.info("Attempting to get dashboard for userId: {}", userId);
 
-        List<TopicProgress> topicProgressList = topicProgressRepository.findByUserId(userId);
+        List<DashboardCourseInfoRs> courses = topicProgressRepository.findDashboardByUserId(userId);
 
-        if (topicProgressList.isEmpty()) {
+        if (courses.isEmpty()) {
             log.info("No topic progress found for userId: {}", userId);
-            return DashboardRs.builder()
-                    .userId(userId)
-                    .courses(List.of())
-                    .build();
+            return DashboardRs.builder().userId(userId).courses(List.of()).build();
         }
 
-        Map<String, Integer> completedTopicsByCourse = topicProgressList.stream()
-                .collect(Collectors.groupingBy(
-                        TopicProgress::getCourseId,
-                        Collectors.summingInt(tp ->
-                                tp.getStatus() == TopicStatus.COMPLETED ? 1 : 0
-                        )
-                ));
-
-        List<String> courseIds = completedTopicsByCourse.keySet().stream().toList();
-
-        List<CourseOverview> courses = new ArrayList<>();
-        courseIds
-                .forEach(courseId -> {
-                    CourseOverview courseOverview = courseOverviewCacheService.findByCourseId(courseId)
-                            .orElseThrow(() -> new NotFoundException(
-                                    "CourseOverview not found for courseId: " + courseId + ", synchronization needed",
-                                    ENTITY_NOT_FOUND_ERROR)
-                            );
-                    courses.add(courseOverview);
-                });
-
-        Map<String, CourseOverview> courseMap = courses.stream()
-                .collect(Collectors.toMap(CourseOverview::getCourseId, ci -> ci));
-
-        DashboardRs dashboardRs = new DashboardRs();
-        dashboardRs.setUserId(userId);
-        completedTopicsByCourse.forEach((key, value) -> {
-            DashboardCourseInfoRs courseInfoRs = DashboardCourseInfoRs.builder()
-                    .courseId(key)
-                    .courseName(courseMap.get(key).getCourseName())
-                    .totalTopics(courseMap.get(key).getTotalTopics())
-                    .completedTopics(value)
-                    .build();
-            dashboardRs.getCourses().add(courseInfoRs);
+        courses.forEach(course -> {
+            if (course.getTotalTopics() != null && course.getTotalTopics() > 0
+                    && course.getCompletedTopics() >= course.getTotalTopics()
+                    && course.getCompletedAt() == null) {
+                courseCompletionService.checkAndMarkCourseCompleted(userId, course.getCourseId());
+                course.setCompletedAt(LocalDateTime.now());
+            }
         });
 
-        log.info(
-                "Dashboard for userId: {} constructed successfully with {} courses",
-                userId, dashboardRs.getCourses().size()
-        );
-        return dashboardRs;
+        List<String> toMarkShown = courses.stream()
+                .filter(c -> c.getCompletedAt() != null && !c.isCelebrationShown())
+                .map(DashboardCourseInfoRs::getCourseId)
+                .toList();
+
+        if (!toMarkShown.isEmpty()) {
+            userCourseCompletionRepository.markCelebrationShown(userId, toMarkShown);
+        }
+
+        log.info("Dashboard for userId: {} constructed successfully with {} courses", userId, courses.size());
+        return DashboardRs.builder().userId(userId).courses(courses).build();
     }
 
     @Override
