@@ -7,7 +7,6 @@ import com.example.cs_common.dto.response.TaskProgressAutosaveRs;
 import com.example.cs_common.dto.response.TaskProgressDetailsRs;
 import com.example.cs_common.dto.response.TaskProgressListRs;
 import com.example.cs_common.dto.response.TaskProgressSummaryRs;
-import com.example.cs_common.dto.response.TaskStatusRs;
 import com.example.cs_common.enums.CodeQualityRating;
 import com.example.cs_common.enums.TaskStatus;
 import com.example.cs_common.exception.NotFoundException;
@@ -180,20 +179,6 @@ public class TaskProgressServiceImpl extends BaseService implements TaskProgress
         log.info("Task progress with id: {} successfully updated to status: {} and rating: {}",
                 event.getTaskProgressId(), event.getTaskStatus(), event.getCodeQualityRating());
 
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public TaskStatusRs getTaskStatus(@NonNull final String taskProgressId) {
-        log.info("Attempting to get task status for task progress id: {}", taskProgressId);
-
-        TaskStatusRs taskStatusRs = taskProgressRepository.findStatusByTaskProgressId(taskProgressId)
-                .orElseThrow(() -> new NotFoundException("TaskProgress not found with id: " + taskProgressId,
-                        ENTITY_NOT_FOUND_ERROR));
-
-        log.info("Task status: {} and codeQualityRating: {} received for taskProgressId: {}",
-                taskStatusRs.taskStatus(), taskStatusRs.codeQualityRating(), taskProgressId);
-        return taskStatusRs;
     }
 
 }
