@@ -1,6 +1,8 @@
 package com.example.cs_progress.service.impl;
 
 import com.example.cs_common.dto.response.DashboardCourseInfoRs;
+import org.springframework.cache.annotation.Cacheable;
+import java.util.Set;
 import com.example.cs_common.dto.response.DashboardRs;
 import com.example.cs_common.dto.response.DashboardTagProgressRs;
 import com.example.cs_common.dto.response.DashboardTagsTabRs;
@@ -73,6 +75,14 @@ public class DashboardServiceImpl extends BaseService implements DashboardServic
 
         log.info("Dashboard for userId: {} constructed successfully with {} courses", userId, courses.size());
         return DashboardRs.builder().userId(userId).courses(courses).build();
+    }
+
+    @Override
+    @Cacheable(value = "topic-progress", key = "#userId + ':' + #courseId")
+    public Set<String> getCompletedTopicIds(@NonNull final String userId, @NonNull final String courseId) {
+        log.info("Getting completed topic IDs for userId: {}, courseId: {}", userId, courseId);
+
+        return topicProgressRepository.findCompletedTopicIdsByUserIdAndCourseId(userId, courseId);
     }
 
     @Override

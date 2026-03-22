@@ -48,7 +48,7 @@ public class TopicProgressServiceImpl extends BaseService implements TopicProgre
         topicProgress.setTotalTasks(topicOverview.getCount());
         topicProgress.incrementCompletedTasks();
         topicProgressRepository.save(topicProgress);
-        cacheEvictionService.evictTopicProgress(userId);
+        cacheEvictionService.evictTopicProgress(userId, courseId);
         courseCompletionService.checkAndMarkCourseCompleted(userId, courseId);
     }
 
