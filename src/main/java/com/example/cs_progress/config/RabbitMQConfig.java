@@ -55,6 +55,10 @@ public class RabbitMQConfig {
                             dlqRoutingKey = "test.item.resolved.dlq";
                         } else if ("lesson.viewed".equals(receivedRoutingKey)) {
                             dlqRoutingKey = "lesson.viewed.dlq";
+                        } else if ("task.completed".equals(receivedRoutingKey)) {
+                            dlqRoutingKey = "task.completed.dlq";
+                        } else if ("ai.rating.updated".equals(receivedRoutingKey)) {
+                            dlqRoutingKey = "ai.rating.updated.dlq";
                         } else if ("progress".equals(receivedRoutingKey)) {
                             dlqRoutingKey = "progress.dlq";
                         }

@@ -1,5 +1,6 @@
 package com.example.cs_progress.service;
 
+import com.example.cs_common.dto.event.AIRatingUpdatedEvent;
 import com.example.cs_common.dto.event.SnapshotSentEvent;
 import com.example.cs_common.dto.event.TaskCompletedEvent;
 import com.example.cs_common.dto.request.CodeSnapshotRq;
@@ -21,4 +22,6 @@ public interface TaskProgressService {
     void saveSnapshot(SnapshotSentEvent event);
 
     void processTaskCompletedEvent(TaskCompletedEvent event);
+
+    void processAIRatingUpdatedEvent(AIRatingUpdatedEvent event);
 }

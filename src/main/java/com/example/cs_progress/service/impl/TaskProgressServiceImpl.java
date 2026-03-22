@@ -1,5 +1,6 @@
 package com.example.cs_progress.service.impl;
 
+import com.example.cs_common.dto.event.AIRatingUpdatedEvent;
 import com.example.cs_common.dto.event.SnapshotSentEvent;
 import com.example.cs_common.dto.event.TaskCompletedEvent;
 import com.example.cs_common.dto.request.CodeSnapshotRq;
@@ -164,7 +165,7 @@ public class TaskProgressServiceImpl extends BaseService implements TaskProgress
         }
         taskProgressRepository.save(taskProgress);
 
-        cacheEvictionService.evictTopicProgress(taskProgress.getUserId());
+        cacheEvictionService.evictTopicProgress(taskProgress.getUserId(), taskProgress.getCourseId());
         cacheEvictionService.evictAIInsights(taskProgress.getUserId());
 
         if (!previousStatus.equals(TaskStatus.SOLVED)) {
@@ -179,6 +180,37 @@ public class TaskProgressServiceImpl extends BaseService implements TaskProgress
         log.info("Task progress with id: {} successfully updated to status: {} and rating: {}",
                 event.getTaskProgressId(), event.getTaskStatus(), event.getCodeQualityRating());
 
+    }
+
+    @Override
+    @Transactional
+    public void processAIRatingUpdatedEvent(@NonNull final AIRatingUpdatedEvent event) {
+        log.info("Attempting to update AI rating for task progress with id: {}", event.getTaskProgressId());
+
+        TaskProgress taskProgress = taskProgressRepository.findById(event.getTaskProgressId()).orElseThrow(
+                () -> new NotFoundException("TaskProgress not found with id: " + event.getTaskProgressId(),
+                        ENTITY_NOT_FOUND_ERROR)
+        );
+
+        CodeQualityRating current = taskProgress.getCodeQualityRating();
+        CodeQualityRating incoming = event.getCodeQualityRating();
+
+        if (incoming != null) {
+            if (current == null || current == CodeQualityRating.NEEDS_IMPROVEMENT) {
+                taskProgress.setCodeQualityRating(incoming);
+            } else if (current == CodeQualityRating.GOOD && incoming == CodeQualityRating.EXCELLENT) {
+                taskProgress.setCodeQualityRating(incoming);
+            }
+            taskProgressRepository.save(taskProgress);
+
+            cacheEvictionService.evictAIInsights(taskProgress.getUserId());
+
+            log.info("AI rating for task progress with id: {} updated to: {}",
+                    event.getTaskProgressId(), incoming);
+        } else {
+            log.warn("AIRatingUpdatedEvent for task progress id: {} has null rating, skipping",
+                    event.getTaskProgressId());
+        }
     }
 
 }
