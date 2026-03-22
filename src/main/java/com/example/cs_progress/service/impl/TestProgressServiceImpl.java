@@ -137,7 +137,6 @@ public class TestProgressServiceImpl extends BaseService implements TestProgress
 
     @Override
     @Transactional
-    @CacheEvict(value = "topic-progress", key = "#rq.userId")
     public TestResultRs finishTest(@NonNull final TestItemUserResolvedRq rq) {
         log.info("Finishing test for userId={}, testId={}",
                 rq.getUserId(), rq.getTestItemResolvedRq().getTestId());
@@ -171,7 +170,7 @@ public class TestProgressServiceImpl extends BaseService implements TestProgress
                 bestScore);
 
         cacheEvictionService.evictAIInsights(rq.getUserId());
-        cacheEvictionService.evictTopicProgress(rq.getUserId());
+        cacheEvictionService.evictTopicProgress(rq.getUserId(), rq.getTestItemResolvedRq().getCourseId());
 
         TestResultRs rs = testProgressMapper.toTestResultRs(testProgress);
 

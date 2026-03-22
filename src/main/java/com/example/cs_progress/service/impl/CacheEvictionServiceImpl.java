@@ -8,9 +8,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class CacheEvictionServiceImpl extends BaseCacheService implements CacheEvictionService {
 
-    @CacheEvict(value = "topic-progress", key = "#userId")
-    public void evictTopicProgress(String userId) {
-        log.info("Evicting topic-progress cache for userId={}", userId);
+    @CacheEvict(value = "topic-progress", key = "#userId + ':' + #courseId")
+    public void evictTopicProgress(String userId, String courseId) {
+        log.info("Evicting topic-progress cache for userId={}, courseId={}", userId, courseId);
     }
 
     @CacheEvict(value = "ai-insights", key = "#userId")

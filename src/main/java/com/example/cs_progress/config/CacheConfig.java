@@ -20,7 +20,7 @@ public class CacheConfig {
         cacheManager.registerCustomCache("topic-progress",
                 Caffeine.newBuilder()
                         .expireAfterWrite(10, TimeUnit.MINUTES)
-                        .maximumSize(50)
+                        .maximumSize(500)
                         .build()
         );
 

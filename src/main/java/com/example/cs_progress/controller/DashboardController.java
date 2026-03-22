@@ -3,6 +3,7 @@ package com.example.cs_progress.controller;
 import com.example.cs_common.dto.response.DashboardRs;
 import com.example.cs_common.dto.response.DashboardTagsTabRs;
 import com.example.cs_common.dto.response.DashboardTopicProgressListRs;
+import java.util.Set;
 import com.example.cs_common.util.BaseController;
 import com.example.cs_progress.service.DashboardService;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,14 @@ public class DashboardController extends BaseController {
         log.info("Request to get dashboard topics tab for userId: {} and courseId: {}", userId, courseId);
 
         return dashboardService.getUserDashboardTopicsTab(userId, courseId);
+    }
+
+    @GetMapping("/completed-topics")
+    public Set<String> getCompletedTopicIds(@RequestParam String userId,
+                                            @RequestParam String courseId) {
+        log.info("Request to get completed topic IDs for userId: {} and courseId: {}", userId, courseId);
+
+        return dashboardService.getCompletedTopicIds(userId, courseId);
     }
 
     @GetMapping("/tags-tab")
