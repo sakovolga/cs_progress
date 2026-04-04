@@ -1,6 +1,7 @@
 package com.example.cs_progress.service
 
 import com.example.cs_common.dto.event.TaskCompletedEvent
+import com.example.cs_common.dto.response.TaskProgressSummaryRs
 import com.example.cs_common.enums.CodeQualityRating
 import com.example.cs_common.enums.TaskStatus
 import com.example.cs_common.exception.NotFoundException
@@ -143,5 +144,38 @@ class TaskProgressServiceSpec extends Specification {
 
         then:
         thrown(NotFoundException)
+    }
+
+    def "task progress list is retrieved correctly"() {
+        given:
+        def rs1 = new TaskProgressSummaryRs(
+                "user-1",
+                "task-1",
+                "topic-1",
+                TaskStatus.SOLVED,
+                null,
+                null
+        )
+
+        def rs2 = new TaskProgressSummaryRs(
+                "user-1",
+                "task-2",
+                "topic-1",
+                TaskStatus.IN_PROGRESS,
+                null,
+                null
+        )
+
+        taskProgressRepository.findByUserIdAndTopicId("user-1", "topic-1") >> [rs1, rs2]
+
+        when:
+        def result = service.getTaskProgressList("user-1", "topic-1")
+
+        then:
+        result.taskProgressRsList.size() == 2
+        result.taskProgressRsList[0].taskId() == "task-1"
+        result.taskProgressRsList[0].taskStatus() == TaskStatus.SOLVED
+        result.taskProgressRsList[1].taskId() == "task-2"
+        result.taskProgressRsList[1].taskStatus() == TaskStatus.IN_PROGRESS
     }
 }
