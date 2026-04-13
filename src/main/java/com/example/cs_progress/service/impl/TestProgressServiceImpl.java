@@ -40,7 +40,6 @@ public class TestProgressServiceImpl extends BaseService implements TestProgress
     private final CacheEvictionService cacheEvictionService;
     private final CourseCompletionService courseCompletionService;
 
-    private static final int MAX_NUMBER_OF_TEST = 3;
     private static final int MAX_TEST_ITEM_INDEX = 9;
     private static final int MAX_NUMBER_OF_TEST_ITEMS = 10;
 
@@ -66,19 +65,6 @@ public class TestProgressServiceImpl extends BaseService implements TestProgress
 
         List<TestProgress> testProgressList = optionalTestsResult.get().getTestProgresses();
 
-        if (testProgressList.size() == MAX_NUMBER_OF_TEST && allAttemptsUsed(testProgressList)) {
-            log.info("All attempts used for user with id: {} in topic with id: {}, resetting for new cycle", userId, topicId);
-
-            TestsResult testsResult = optionalTestsResult.get();
-            testsResult.getTestProgresses().clear();
-            testsResultRepository.save(testsResult);
-
-            return CurrentTestInfoRs.builder()
-                    .isAllAttemptsUsed(false)
-                    .isTestCompleted(false)
-                    .build();
-        }
-
         Optional<TestProgress> activeProgressOpt = testProgressList.stream()
                 .filter(tp -> tp.getStatus() != TestStatus.COMPLETED)
                 .findFirst();
@@ -93,16 +79,6 @@ public class TestProgressServiceImpl extends BaseService implements TestProgress
                 activeProgress.updateScore();
                 activeProgress.setStatus(TestStatus.COMPLETED);
                 testsResultRepository.save(optionalTestsResult.get());
-
-                if (testProgressList.size() >= MAX_NUMBER_OF_TEST && allAttemptsUsed(testProgressList)) {
-                    TestsResult testsResult = optionalTestsResult.get();
-                    testsResult.getTestProgresses().clear();
-                    testsResultRepository.save(testsResult);
-                    return CurrentTestInfoRs.builder()
-                            .isAllAttemptsUsed(false)
-                            .isTestCompleted(false)
-                            .build();
-                }
 
                 return CurrentTestInfoRs.builder()
                         .isTestCompleted(true)
@@ -161,7 +137,8 @@ public class TestProgressServiceImpl extends BaseService implements TestProgress
             testProgress.setStatus(TestStatus.COMPLETED);
         }
 
-        Double bestScore = calculateBestScore(testsResult);
+        Double currentBest = testsResult.getBestScore() != null ? testsResult.getBestScore() : 0.0;
+        Double bestScore = Math.max(currentBest, calculateBestScore(testsResult));
         testsResult.setBestScore(bestScore);
         saveBestScoreToTopicProgress(
                 rq.getUserId(),
@@ -216,14 +193,15 @@ public class TestProgressServiceImpl extends BaseService implements TestProgress
                 .score(event.getTestItemScore())
                 .build();
 
-        // Если все попытки завершены — сбросить цикл (bestScore в TestsResult сохраняется)
-        boolean allCompleted = !testsResult.getTestProgresses().isEmpty()
-                && testsResult.getTestProgresses().stream()
-                        .allMatch(tp -> tp.getStatus() == TestStatus.COMPLETED);
-        if (allCompleted) {
+        // Новый цикл начинается, когда контент-сервис снова отдаёт тест, уже пройденный в текущем цикле
+        boolean isNewCycle = testsResult.getTestProgresses().stream()
+                .anyMatch(tp -> tp.getTestId().equals(event.getTestId())
+                        && tp.getStatus() == TestStatus.COMPLETED);
+        if (isNewCycle) {
             testsResult.getTestProgresses().clear();
             testsResultRepository.save(testsResult);
-            log.info("All tests completed, resetting cycle for new round. bestScore preserved. userId={}", event.getUserId());
+            log.info("New cycle detected for testId={}, resetting progress. bestScore preserved. userId={}",
+                    event.getTestId(), event.getUserId());
         }
 
         // Поиск TestProgress для текущего теста
