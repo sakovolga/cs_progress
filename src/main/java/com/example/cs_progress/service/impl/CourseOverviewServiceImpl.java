@@ -103,6 +103,7 @@ public class CourseOverviewServiceImpl extends BaseService implements CourseOver
 
             if (courseOverviewDto.getTopicOverviewDtos() != null && !courseOverviewDto.getTopicOverviewDtos().isEmpty()) {
                 batchInsertTopicOverviews(connection, courseOverview, courseOverviewDto.getTopicOverviewDtos());
+                recalculateTopicProgressPercentages(connection, courseOverviewDto.getCourseId());
             }
         });
 
@@ -158,6 +159,41 @@ public class CourseOverviewServiceImpl extends BaseService implements CourseOver
 
             int[] result = ps.executeBatch();
             log.info("Batch inserted {} TagTopicCounts", result.length);
+        }
+    }
+
+    private void recalculateTopicProgressPercentages(Connection conn, String courseId) throws SQLException {
+        String sql = """
+            UPDATE topic_progress tp
+            SET total_tasks = tov.count,
+                task_completion_percentage = CASE
+                    WHEN tov.count > 0 THEN LEAST((tp.completed_tasks * 100.0 / tov.count), 100.0)
+                    ELSE 0.0
+                END,
+                status = CASE
+                    WHEN tov.count > 0
+                         AND LEAST((tp.completed_tasks * 100.0 / tov.count), 100.0) >= 25.0
+                         AND tp.best_test_score_percentage >= 70.0 THEN 'COMPLETED'
+                    WHEN tp.completed_tasks > 0 OR tp.best_test_score_percentage > 0 THEN 'IN_PROGRESS'
+                    ELSE 'NOT_STARTED'
+                END,
+                completed_at = CASE
+                    WHEN tov.count > 0
+                         AND LEAST((tp.completed_tasks * 100.0 / tov.count), 100.0) >= 25.0
+                         AND tp.best_test_score_percentage >= 70.0 THEN COALESCE(tp.completed_at, NOW())
+                    ELSE NULL
+                END
+            FROM topic_overviews tov
+            JOIN course_overviews co ON tov.course_overview_id = co.id
+            WHERE tp.topic_id = tov.topic_id
+              AND co.course_id = ?
+              AND tp.completed_tasks > 0
+        """;
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, courseId);
+            int updated = ps.executeUpdate();
+            log.info("Recalculated task_completion_percentage and status for {} TopicProgress records in course {}", updated, courseId);
         }
     }
 
