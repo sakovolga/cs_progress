@@ -18,6 +18,7 @@ import com.example.cs_progress.repository.TopicProgressRepository;
 import com.example.cs_progress.service.CacheEvictionService;
 import com.example.cs_progress.service.CourseCompletionService;
 import com.example.cs_progress.service.TestProgressService;
+import com.example.cs_progress.service.TopicProgressService;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -37,6 +38,7 @@ public class TestProgressServiceImpl extends BaseService implements TestProgress
     private final TestItemResultMapper testItemResultMapper;
     private final TestProgressMapper testProgressMapper;
     private final TopicProgressRepository topicProgressRepository;
+    private final TopicProgressService topicProgressService;
     private final CacheEvictionService cacheEvictionService;
     private final CourseCompletionService courseCompletionService;
 
@@ -273,12 +275,7 @@ public class TestProgressServiceImpl extends BaseService implements TestProgress
                 userId, courseId, topicId, bestScore
         );
 
-        TopicProgress topicProgress = topicProgressRepository.findByUserIdAndTopicId(userId, topicId)
-                .orElse(TopicProgress.builder()
-                        .userId(userId)
-                        .courseId(courseId)
-                        .topicId(topicId)
-                        .build());
+        TopicProgress topicProgress = topicProgressService.getOrCreateTopicProgress(userId, courseId, topicId);
         topicProgress.setBestTestScorePercentage(bestScore);
         topicProgress.updateStatus();
         topicProgressRepository.save(topicProgress);

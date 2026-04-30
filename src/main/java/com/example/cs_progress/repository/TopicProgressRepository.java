@@ -59,10 +59,11 @@ public interface TopicProgressRepository extends JpaRepository<TopicProgress, St
             tp.topicId,
             tp.bestTestScorePercentage,
             tp.taskCompletionPercentage,
-            tp.status
+            tp.status,
+            tp.practiceAbsent
         )
         FROM TopicProgress tp
-        WHERE tp.userId = :userId 
+        WHERE tp.userId = :userId
         AND tp.courseId = :courseId
     """)
     List<DashboardTopicProgressRs> findByUserIdAndCourseId(

@@ -166,19 +166,25 @@ public class CourseOverviewServiceImpl extends BaseService implements CourseOver
         String sql = """
             UPDATE topic_progress tp
             SET total_tasks = tov.count,
+                practice_absent = tov.practice_absent,
                 task_completion_percentage = CASE
+                    WHEN tov.practice_absent THEN 0.0
                     WHEN tov.count > 0 THEN LEAST((tp.completed_tasks * 100.0 / tov.count), 100.0)
                     ELSE 0.0
                 END,
                 status = CASE
-                    WHEN tov.count > 0
+                    WHEN tov.practice_absent AND tp.best_test_score_percentage >= 70.0 THEN 'COMPLETED'
+                    WHEN NOT tov.practice_absent
+                         AND tov.count > 0
                          AND LEAST((tp.completed_tasks * 100.0 / tov.count), 100.0) >= 25.0
                          AND tp.best_test_score_percentage >= 70.0 THEN 'COMPLETED'
                     WHEN tp.completed_tasks > 0 OR tp.best_test_score_percentage > 0 THEN 'IN_PROGRESS'
                     ELSE 'NOT_STARTED'
                 END,
                 completed_at = CASE
-                    WHEN tov.count > 0
+                    WHEN tov.practice_absent AND tp.best_test_score_percentage >= 70.0 THEN COALESCE(tp.completed_at, NOW())
+                    WHEN NOT tov.practice_absent
+                         AND tov.count > 0
                          AND LEAST((tp.completed_tasks * 100.0 / tov.count), 100.0) >= 25.0
                          AND tp.best_test_score_percentage >= 70.0 THEN COALESCE(tp.completed_at, NOW())
                     ELSE NULL
@@ -187,7 +193,7 @@ public class CourseOverviewServiceImpl extends BaseService implements CourseOver
             JOIN course_overviews co ON tov.course_overview_id = co.id
             WHERE tp.topic_id = tov.topic_id
               AND co.course_id = ?
-              AND tp.completed_tasks > 0
+              AND (tp.completed_tasks > 0 OR tp.best_test_score_percentage > 0)
         """;
 
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -203,8 +209,8 @@ public class CourseOverviewServiceImpl extends BaseService implements CourseOver
             id, course_overview_id, topic_id, topic_name,
             grandparent_id, grandparent_name, grandparent_order,
             parent_id, parent_name, parent_order,
-            order_index, count
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            order_index, count, practice_absent
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """;
 
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -221,6 +227,7 @@ public class CourseOverviewServiceImpl extends BaseService implements CourseOver
                 ps.setObject(10, dto.getParentOrder());
                 ps.setInt(11, dto.getOrderIndex());
                 ps.setInt(12, dto.getCount());
+                ps.setBoolean(13, dto.isPracticeAbsent());
                 ps.addBatch();
             }
 
