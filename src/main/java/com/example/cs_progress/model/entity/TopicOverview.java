@@ -62,6 +62,10 @@ public class TopicOverview extends IdentifiableEntity {
     @Builder.Default
     private Integer orderIndex = 0;
 
+    @Column(name = "practice_absent", nullable = false, columnDefinition = "boolean default false")
+    @Builder.Default
+    private boolean practiceAbsent = false;
+
     public void incrementCount() {
         this.count += 1;
     }

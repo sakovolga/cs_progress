@@ -74,6 +74,12 @@ public class TopicProgress extends IdentifiableEntity {
     @Builder.Default
     private Double taskCompletionPercentage = 0.0;
 
+    // ========== Метаданные топика ==========
+
+    @Column(name = "practice_absent", nullable = false, columnDefinition = "boolean default false")
+    @Builder.Default
+    private boolean practiceAbsent = false;
+
     // ========== Общий прогресс ==========
 
 //    @Column(name = "progress_percentage")
@@ -120,7 +126,10 @@ public class TopicProgress extends IdentifiableEntity {
     // ========== Бизнес-методы ==========
 
     public void updateStatus() {
-        if(bestTestScorePercentage >= 70.0 && taskCompletionPercentage >= 25.0) {
+        boolean testPassed = bestTestScorePercentage >= 70.0;
+        boolean tasksDone = practiceAbsent || taskCompletionPercentage >= 25.0;
+
+        if (testPassed && tasksDone) {
             this.status = TopicStatus.COMPLETED;
             if (this.completedAt == null) {
                 this.completedAt = LocalDateTime.now();

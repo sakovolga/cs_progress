@@ -34,22 +34,30 @@ public class TopicProgressServiceImpl extends BaseService implements TopicProgre
         log.info("Updating task stats in TopicProgress for userId: {}, courseId: {}, topicId: {}",
                 userId, courseId, topicId);
 
-        TopicProgress topicProgress = topicProgressRepository.findByUserIdAndTopicId(userId, topicId)
-                .orElse(TopicProgress.builder()
-                        .userId(userId)
-                        .courseId(courseId)
-                        .topicId(topicId)
-                        .build());
-
-        TopicOverview topicOverview = topicOverviewRepository.findByTopicId(topicId)
-                .orElseThrow(() -> new NotFoundException(
-                        "TaskTopicCount not found for topicId: " + topicId, ENTITY_NOT_FOUND_ERROR)
-                );
-        topicProgress.setTotalTasks(topicOverview.getCount());
+        TopicProgress topicProgress = getOrCreateTopicProgress(userId, courseId, topicId);
         topicProgress.incrementCompletedTasks();
         topicProgressRepository.save(topicProgress);
         cacheEvictionService.evictTopicProgress(userId, courseId);
         courseCompletionService.checkAndMarkCourseCompleted(userId, courseId);
+    }
+
+    @Override
+    public TopicProgress getOrCreateTopicProgress(@NonNull final String userId,
+                                                  @NonNull final String courseId,
+                                                  @NonNull final String topicId) {
+        return topicProgressRepository.findByUserIdAndTopicId(userId, topicId)
+                .orElseGet(() -> {
+                    TopicOverview topicOverview = topicOverviewRepository.findByTopicId(topicId)
+                            .orElseThrow(() -> new NotFoundException(
+                                    "TopicOverview not found for topicId: " + topicId, ENTITY_NOT_FOUND_ERROR));
+                    return TopicProgress.builder()
+                            .userId(userId)
+                            .courseId(courseId)
+                            .topicId(topicId)
+                            .totalTasks(topicOverview.getCount())
+                            .practiceAbsent(topicOverview.isPracticeAbsent())
+                            .build();
+                });
     }
 
 }
