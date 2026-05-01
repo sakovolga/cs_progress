@@ -45,26 +45,14 @@ public class AIInsightGeneratorServiceImpl extends BaseService implements AIInsi
             log.debug("Generated prompt length: {} characters", prompt.length());
 
             // 3. Получаем ответ от ИИ
-            // String aiResponse = chatClient.prompt()
-            //         .user(prompt)
-            //         .call()
-            //         .content();
-            // log.debug("Received AI response length: {} characters", aiResponse.length());
+            String aiResponse = chatClient.prompt()
+                    .user(prompt)
+                    .call()
+                    .content();
+            log.debug("Received AI response length: {} characters", aiResponse.length());
 
             // 4. Парсим ответ
-            // AIInsightResponse insight = parseAIResponse(aiResponse);
-            //TODO: delete mock response
-            AIInsightResponse insight = AIInsightResponse.builder()
-                    .summary("You are making steady progress. Keep practicing regularly to build confidence and deepen your understanding.")
-                    .strengths(List.of("Consistent engagement", "Good test completion rate"))
-                    .recommendations(List.of(
-                            Recommendation.builder()
-                                    .title("Keep up the practice")
-                                    .description("Continue working through the current topics to reinforce what you have learned.")
-                                    .priority("HIGH")
-                                    .build()
-                    ))
-                    .build();
+            AIInsightResponse insight = parseAIResponse(aiResponse);
             insight.setGeneratedAt(generationStartedAt);
 
             long duration = System.currentTimeMillis() - startTime;

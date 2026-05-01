@@ -32,14 +32,14 @@ spring:
         current_session_context_class: thread  # ← Для правильного управления сессией
         
   ai:
-#    openai:
-#      enabled: true
-#      api-key: ${OPENAI_API_KEY}  # Или напрямую: sk-proj-...
-#      chat:
-#        options:
-#          model: gpt-4.1-mini
-#          temperature: 0.7
-#          max-tokens: 4096
+    openai:
+      enabled: true
+      api-key: ${OPENAI_API_KEY}  # Или напрямую: sk-proj-...
+      chat:
+        options:
+          model: gpt-4.1-mini
+          temperature: 0.7
+          max-tokens: 4096
 #    anthropic:
 #      enabled: true
 #      api-key: ${ANTHROPIC_API_KEY}
@@ -48,12 +48,12 @@ spring:
 #        options:
 #          model: claude-haiku-4-5-20251001
 #          max-tokens: 4096
-    ollama:
-      enabled: true
-      base-url: http://localhost:11434 # Порт 11434
-      chat:
-        options:
-          model: qwen2.5-coder:7b
+#    ollama:
+#      enabled: true
+#      base-url: http://localhost:11434 # Порт 11434
+#      chat:
+#        options:
+#          model: qwen2.5-coder:7b
   
   # ============= RABBITMQ НАСТРОЙКИ =============
   rabbitmq:

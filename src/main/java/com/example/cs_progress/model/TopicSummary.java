@@ -20,6 +20,9 @@ public class TopicSummary {
     // Метрики по тестам
     private Double bestTestScorePercentage;
 
+    // Практика
+    private boolean practiceAbsent;
+
     // Активность
     private LocalDateTime lastActivity;
 }

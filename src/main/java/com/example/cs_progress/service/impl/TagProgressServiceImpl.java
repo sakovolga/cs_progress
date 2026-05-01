@@ -27,31 +27,6 @@ public class TagProgressServiceImpl extends BaseService implements TagProgressSe
     private final TagCountRepository tagCountRepository;
     private final CacheEvictionService cacheEvictionService;
 
-    private static final Double MAX_TEST_ITEM_SCORE = 10.0;
-
-    @Override
-    @Transactional
-    public void processTagsFromResolvedTestItem(@NonNull final String courseId,
-                                                @NonNull final String topicId,
-                                                @NonNull final String userId,
-                                                final List<String> tagNames,
-                                                final Double score) {
-        log.info("Processing tag progress from test item for userId: {}, tags: {}, score: {}",
-                userId, tagNames, score);
-
-        if (isEmptyTagList(tagNames)) {
-            log.debug("No tags to process for the resolved test item");
-            return;
-        }
-
-        Boolean isCorrect = isFullyCorrectAnswer(score);
-        processTagsForActivity(courseId, topicId, userId, tagNames, isCorrect, false);
-
-        cacheEvictionService.evictAIInsights(userId);
-
-        log.info("Completed processing tag progress from test item for userId: {}", userId);
-    }
-
     @Override
     @Transactional
     public void processTagsFromCompletedTask(@NonNull final String courseId,
@@ -65,7 +40,7 @@ public class TagProgressServiceImpl extends BaseService implements TagProgressSe
             return;
         }
 
-        processTagsForActivity(courseId, topicId, userId, tagNames, null, true);
+        processTagsForActivity(courseId, topicId, userId, tagNames, true);
 
         log.info("Completed processing tag progress from task for userId: {}", userId);
     }
@@ -77,7 +52,6 @@ public class TagProgressServiceImpl extends BaseService implements TagProgressSe
                                         @NonNull final String topicId,
                                         @NonNull final String userId,
                                         @NonNull final List<String> tagNames,
-                                        final Boolean isCorrect,
                                         final Boolean isTaskCompletion) {
         log.debug("Processing {} tags for activity in topicId: {}", tagNames.size(), topicId);
 
@@ -93,7 +67,7 @@ public class TagProgressServiceImpl extends BaseService implements TagProgressSe
                 tagProgressRepository.save(tagProgress);
             } else {
                 log.debug("Creating new TagProgress for tag: {}", tagName);
-                createNewTagProgress(courseId, topicId, userId, tagName, isCorrect, isTaskCompletion);
+                createNewTagProgress(courseId, topicId, userId, tagName, isTaskCompletion);
             }
         }
     }
@@ -173,7 +147,6 @@ public class TagProgressServiceImpl extends BaseService implements TagProgressSe
                                       @NonNull final String topicId,
                                       @NonNull final String userId,
                                       @NonNull final String tagName,
-                                      final Boolean isCorrect,
                                       final Boolean isTaskCompletion) {
         TagCount expectedTaskCount = loadOrFailTagTaskCount(tagName, courseId);
 
@@ -184,7 +157,7 @@ public class TagProgressServiceImpl extends BaseService implements TagProgressSe
                 .totalTasks(expectedTaskCount.getCount())
                 .build();
 
-        initializeAllTopicProgresses(tagProgress, expectedTaskCount, topicId, isCorrect, isTaskCompletion);
+        initializeAllTopicProgresses(tagProgress, expectedTaskCount, topicId, isTaskCompletion);
 
         tagProgressRepository.save(tagProgress);
         log.debug("Created new TagProgress for tag: {} with {} topics", tagName, tagProgress.getTopicProgresses().size());
@@ -207,7 +180,6 @@ public class TagProgressServiceImpl extends BaseService implements TagProgressSe
     private void initializeAllTopicProgresses(@NonNull final TagProgress tagProgress,
                                               @NonNull final TagCount expectedTaskCount,
                                               @NonNull final String activeTopicId,
-                                              final Boolean isCorrect,
                                               final Boolean isTaskCompletion) {
         if (expectedTaskCount.getCount() == 0) {
             log.warn("No topic counts found for tag: {}. Skipping topic initialization.", tagProgress.getTagName());
@@ -230,6 +202,7 @@ public class TagProgressServiceImpl extends BaseService implements TagProgressSe
             if (activeTopicId.equals(topicCount.getTopicId())) {
                 applyActivityToTopicProgress(tagTopicProgress, tagProgress, isTaskCompletion);
             }
+
         }
     }
 
@@ -268,13 +241,6 @@ public class TagProgressServiceImpl extends BaseService implements TagProgressSe
                         .findFirst())
                 .map(TagTopicCount::getCount)
                 .orElse(0);
-    }
-
-    /**
-     * Проверить, является ли ответ полностью правильным
-     */
-    private Boolean isFullyCorrectAnswer(final Double score) {
-        return score != null && score.equals(MAX_TEST_ITEM_SCORE);
     }
 
     /**
