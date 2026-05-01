@@ -111,6 +111,9 @@ public class PromptGeneratorServiceImpl extends BaseService implements PromptGen
                 prompt.append(String.format("%d%% test score",
                         topic.getBestTestScorePercentage().intValue()
                 ));
+                if (topic.isPracticeAbsent()) {
+                    prompt.append(" (no practice tasks)");
+                }
             }
 
             prompt.append(String.format(", last activity: %s\n",
@@ -170,6 +173,7 @@ public class PromptGeneratorServiceImpl extends BaseService implements PromptGen
         prompt.append("   - Which topics require additional task practice\n");
         prompt.append("   - Which topics require theory review (low test score)\n");
         prompt.append("   - Which weak skills need to be practiced\n");
+        prompt.append("   - IMPORTANT: do NOT recommend task practice for topics marked as \"(no practice tasks)\"\n");
         prompt.append("3. Motivate based on activity:\n");
         prompt.append("   - If 0-2 days without activity: praise for consistency\n");
         prompt.append("   - If 3-7 days: gently remind to continue\n");

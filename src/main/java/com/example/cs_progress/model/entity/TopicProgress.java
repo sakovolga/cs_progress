@@ -115,6 +115,7 @@ public class TopicProgress extends IdentifiableEntity {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
         firstActivity = createdAt;
+        lastActivity = createdAt;
     }
 
     @PreUpdate

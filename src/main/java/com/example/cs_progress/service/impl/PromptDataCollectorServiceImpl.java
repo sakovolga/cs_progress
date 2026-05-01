@@ -97,6 +97,7 @@ public class PromptDataCollectorServiceImpl extends BaseService implements Promp
     private List<TopicSummary> getBestTopicsByTasks(List<TopicProgress> topics) {
         return topics.stream()
                 .filter(t -> t.getTaskCompletionPercentage() != null)
+                .filter(t -> !t.isPracticeAbsent())
                 .sorted(Comparator
                         .comparing(TopicProgress::getTaskCompletionPercentage).reversed()
                         .thenComparing(TopicProgress::getLastActivity,
@@ -114,6 +115,7 @@ public class PromptDataCollectorServiceImpl extends BaseService implements Promp
     private List<TopicSummary> getWorstTopicsByTasks(List<TopicProgress> topics) {
         return topics.stream()
                 .filter(t -> t.getTaskCompletionPercentage() != null)
+                .filter(t -> !t.isPracticeAbsent())
                 .filter(t -> t.getTaskCompletionPercentage() >= 30.0) // минимальный порог
                 .sorted(Comparator
                         .comparing(TopicProgress::getTaskCompletionPercentage)
@@ -260,6 +262,7 @@ public class PromptDataCollectorServiceImpl extends BaseService implements Promp
                 .totalTasks(topic.getTotalTasks())
                 .taskCompletionPercentage(topic.getTaskCompletionPercentage())
                 .bestTestScorePercentage(topic.getBestTestScorePercentage())
+                .practiceAbsent(topic.isPracticeAbsent())
                 .lastActivity(topic.getLastActivity())
                 .build();
     }
