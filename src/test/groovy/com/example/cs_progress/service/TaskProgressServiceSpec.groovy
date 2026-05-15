@@ -269,6 +269,33 @@ class TaskProgressServiceSpec extends Specification {
         1 * cacheEvictionService.evictAIInsights("user-1")
     }
 
+    def "getTaskProgressListByTaskIds returns empty list without hitting repository when taskIds is empty"() {
+        when:
+        def result = service.getTaskProgressListByTaskIds("user-1", [])
+
+        then:
+        result.taskProgressRsList.isEmpty()
+        0 * taskProgressRepository.findByUserIdAndTaskIdIn(*_)
+    }
+
+    def "getTaskProgressListByTaskIds returns results from repository for non-empty taskIds"() {
+        given:
+        def rs1 = new TaskProgressSummaryRs("user-1", "task-1", "topic-1", TaskStatus.SOLVED, null, null)
+        def rs2 = new TaskProgressSummaryRs("user-1", "task-2", "topic-1", TaskStatus.IN_PROGRESS, null, null)
+
+        taskProgressRepository.findByUserIdAndTaskIdIn("user-1", ["task-1", "task-2"]) >> [rs1, rs2]
+
+        when:
+        def result = service.getTaskProgressListByTaskIds("user-1", ["task-1", "task-2"])
+
+        then:
+        result.taskProgressRsList.size() == 2
+        result.taskProgressRsList[0].taskId() == "task-1"
+        result.taskProgressRsList[0].taskStatus() == TaskStatus.SOLVED
+        result.taskProgressRsList[1].taskId() == "task-2"
+        result.taskProgressRsList[1].taskStatus() == TaskStatus.IN_PROGRESS
+    }
+
     def "tag and topic progress are updated when task transitions from NOT_STARTED to SOLVED"() {
         given:
         def taskProgress = TaskProgress.builder()
