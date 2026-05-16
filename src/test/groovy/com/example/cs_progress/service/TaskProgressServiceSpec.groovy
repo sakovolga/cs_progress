@@ -1,6 +1,7 @@
 package com.example.cs_progress.service
 
 import com.example.cs_common.dto.event.TaskCompletedEvent
+import com.example.cs_common.dto.response.TaskProgressDetailsRs
 import com.example.cs_common.dto.response.TaskProgressSummaryRs
 import com.example.cs_common.enums.CodeQualityRating
 import com.example.cs_common.enums.TaskStatus
@@ -267,6 +268,50 @@ class TaskProgressServiceSpec extends Specification {
         then:
         1 * cacheEvictionService.evictTopicProgress("user-1", "course-1")
         1 * cacheEvictionService.evictAIInsights("user-1")
+    }
+
+    def "getTaskProgressDetails returns existing record when found"() {
+        given:
+        def existing = new TaskProgressDetailsRs("tp-1", "user-1", "task-1", TaskStatus.IN_PROGRESS, null, null, null)
+        taskProgressRepository.findByUserIdAndTaskId("user-1", "task-1") >> existing
+
+        when:
+        def result = service.getTaskProgressDetails("user-1", "task-1", "topic-1", "course-1")
+
+        then:
+        result == existing
+        0 * taskProgressRepository.saveAndFlush(_)
+        0 * taskProgressMapper.toTaskProgressDetailsRs(_)
+    }
+
+    def "getTaskProgressDetails creates NOT_STARTED record when none exists"() {
+        given:
+        taskProgressRepository.findByUserIdAndTaskId("user-1", "task-1") >> null
+
+        def savedEntity = TaskProgress.builder()
+                .userId("user-1")
+                .taskId("task-1")
+                .topicId("topic-1")
+                .courseId("course-1")
+                .taskStatus(TaskStatus.NOT_STARTED)
+                .build()
+        taskProgressRepository.saveAndFlush(_) >> savedEntity
+
+        def mapped = new TaskProgressDetailsRs(null, "user-1", "task-1", TaskStatus.NOT_STARTED, null, null, null)
+        taskProgressMapper.toTaskProgressDetailsRs(_) >> mapped
+
+        when:
+        def result = service.getTaskProgressDetails("user-1", "task-1", "topic-1", "course-1")
+
+        then:
+        result == mapped
+        1 * taskProgressRepository.saveAndFlush({ TaskProgress tp ->
+            tp.userId == "user-1" &&
+            tp.taskId == "task-1" &&
+            tp.topicId == "topic-1" &&
+            tp.courseId == "course-1" &&
+            tp.taskStatus == TaskStatus.NOT_STARTED
+        })
     }
 
     def "getTaskProgressListByTaskIds returns empty list without hitting repository when taskIds is empty"() {
