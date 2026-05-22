@@ -57,10 +57,15 @@ public class PromptDataCollectorServiceImpl extends BaseService implements Promp
         List<TopicSummary> worstByTests = getWorstTopicsByTests(allTopics);
 
         // 4. Получаем навыки
+        Set<String> practiceAbsentTopicIds = allTopics.stream()
+                .filter(TopicProgress::isPracticeAbsent)
+                .map(TopicProgress::getTopicId)
+                .collect(Collectors.toSet());
+
         List<TagTopicProgress> allTagTopicProgresses = tagTopicProgressRepository
                 .findByTagProgress_UserId(userId);
         List<SkillSummary> bestSkills = getBestSkills(allTagTopicProgresses);
-        List<SkillSummary> weakSkills = getWeakSkills(allTagTopicProgresses);
+        List<SkillSummary> weakSkills = getWeakSkills(allTagTopicProgresses, practiceAbsentTopicIds);
 
         // 5. Вычисляем активность
         Integer daysSinceLastActivity = calculateDaysSinceLastActivity(allTopics);
@@ -116,7 +121,8 @@ public class PromptDataCollectorServiceImpl extends BaseService implements Promp
         return topics.stream()
                 .filter(t -> t.getTaskCompletionPercentage() != null)
                 .filter(t -> !t.isPracticeAbsent())
-                .filter(t -> t.getTaskCompletionPercentage() >= 30.0) // минимальный порог
+                .filter(t -> t.getTaskCompletionPercentage() >= 30.0)
+                .filter(t -> t.getTaskCompletionPercentage() < 100.0)
                 .sorted(Comparator
                         .comparing(TopicProgress::getTaskCompletionPercentage)
                         .thenComparing(TopicProgress::getLastActivity,
@@ -184,12 +190,13 @@ public class PromptDataCollectorServiceImpl extends BaseService implements Promp
      * Топ-3 слабых навыка в контексте топиков
      * Сортировка: TaskCompletionRate ASC, topicLastActivity DESC
      */
-    private List<SkillSummary> getWeakSkills(List<TagTopicProgress> allTagTopicProgresses) {
-
+    private List<SkillSummary> getWeakSkills(List<TagTopicProgress> allTagTopicProgresses,
+                                              Set<String> practiceAbsentTopicIds) {
         return allTagTopicProgresses.stream()
                 .filter(ttp -> ttp.getTaskCompletionRate() != null)
                 .filter(TagTopicProgress::hasActivity)
-                .filter(ttp -> ttp.getTaskCompletionRate() < 60.0) // только слабые
+                .filter(ttp -> ttp.getTaskCompletionRate() < 60.0)
+                .filter(ttp -> !practiceAbsentTopicIds.contains(ttp.getTopicId()))
                 .sorted(Comparator
                         .comparing(TagTopicProgress::getTaskCompletionRate)
                         .thenComparing(TagTopicProgress::getUpdatedAt,

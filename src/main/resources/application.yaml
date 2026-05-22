@@ -1,6 +1,9 @@
 spring:
   application:
     name: cs_progress
+    
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:default}
   
   datasource:
     url: ${SPRING_DATASOURCE_URL}
