@@ -168,7 +168,7 @@ public class PromptGeneratorServiceImpl extends BaseService implements PromptGen
      */
     private void appendTaskSection(StringBuilder prompt) {
         prompt.append("TASK:\n");
-        prompt.append("1. Praise the user for topics with good task and test results.\n");
+        prompt.append("1. Identify 2-4 strengths based on the user's best topics and skills. Each strength must be 1-2 sentences: name the specific topic or skill, explain what the result means, and add a brief encouraging note.\n");
         prompt.append("2. Provide 3-5 specific recommendations:\n");
         prompt.append("   - Which topics require additional task practice\n");
         prompt.append("   - Which topics require theory review (low test score)\n");
@@ -182,7 +182,7 @@ public class PromptGeneratorServiceImpl extends BaseService implements PromptGen
         prompt.append("Response format: JSON\n");
         prompt.append("{\n");
         prompt.append("  \"summary\": \"brief overview in 2-3 sentences\",\n");
-        prompt.append("  \"strengths\": [\"strength 1\", \"strength 2\"],\n");
+        prompt.append("  \"strengths\": [\"1-2 sentence description of a specific strength with context and encouragement\", \"...\"],\n");
         prompt.append("  \"recommendations\": [\n");
         prompt.append("    {\n");
         prompt.append("      \"title\": \"recommendation title\",\n");
