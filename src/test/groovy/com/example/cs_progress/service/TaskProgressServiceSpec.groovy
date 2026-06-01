@@ -1,6 +1,8 @@
 package com.example.cs_progress.service
 
 import com.example.cs_common.dto.event.TaskCompletedEvent
+import com.example.cs_common.dto.request.CodeSnapshotRq
+import com.example.cs_common.dto.response.TaskProgressAutosaveRs
 import com.example.cs_common.dto.response.TaskProgressDetailsRs
 import com.example.cs_common.dto.response.TaskProgressSummaryRs
 import com.example.cs_common.enums.CodeQualityRating
@@ -13,6 +15,8 @@ import com.example.cs_progress.service.impl.TaskProgressServiceImpl
 import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Unroll
+
+import java.time.LocalDateTime
 
 class TaskProgressServiceSpec extends Specification {
 
@@ -366,5 +370,106 @@ class TaskProgressServiceSpec extends Specification {
         then:
         1 * tagProgressService.processTagsFromCompletedTask("course-1", "topic-1", "user-1", ["loops"])
         1 * topicProgressService.updateTaskStatsInTopicProgress("user-1", "course-1", "topic-1")
+    }
+
+    def "autosave returns TaskProgressAutosaveRs from mapper"() {
+        given:
+        def rq = new CodeSnapshotRq(taskProgressId: "tp-1", lastSnapshot: "def solution(): pass")
+
+        def existing = TaskProgress.builder()
+                .userId("user-1").taskId("task-1").topicId("topic-1").courseId("course-1")
+                .taskStatus(TaskStatus.IN_PROGRESS).build()
+        def mapped = TaskProgress.builder().userId("user-1").taskId("task-1").lastSnapshot("def solution(): pass").build()
+        def saved = TaskProgress.builder().userId("user-1").taskId("task-1").build()
+        def expectedRs = new TaskProgressAutosaveRs("tp-1", LocalDateTime.now())
+
+        taskProgressRepository.findById("tp-1") >> Optional.of(existing)
+        taskProgressMapper.toTaskProgress(rq, existing) >> mapped
+        taskProgressRepository.save(mapped) >> saved
+        taskProgressMapper.toTaskProgressAutosaveRs(saved) >> expectedRs
+
+        when:
+        def result = service.autosave(rq)
+
+        then:
+        result == expectedRs
+    }
+
+    def "autosave throws NotFoundException when task progress is not found"() {
+        given:
+        def rq = new CodeSnapshotRq(taskProgressId: "unknown-id", lastSnapshot: "code")
+
+        taskProgressRepository.findById("unknown-id") >> Optional.empty()
+
+        when:
+        service.autosave(rq)
+
+        then:
+        thrown(NotFoundException)
+    }
+
+    def "autosave calls mapper with the request and existing entity"() {
+        given:
+        def rq = new CodeSnapshotRq(taskProgressId: "tp-1", lastSnapshot: "def foo(): pass")
+
+        def existing = TaskProgress.builder()
+                .userId("user-1").taskId("task-1").topicId("topic-1").courseId("course-1")
+                .taskStatus(TaskStatus.IN_PROGRESS).build()
+        def mapped = TaskProgress.builder().userId("user-1").taskId("task-1").build()
+        def saved = TaskProgress.builder().userId("user-1").taskId("task-1").build()
+
+        taskProgressRepository.findById("tp-1") >> Optional.of(existing)
+        taskProgressRepository.save(_) >> saved
+        taskProgressMapper.toTaskProgressAutosaveRs(_) >> new TaskProgressAutosaveRs("tp-1", LocalDateTime.now())
+
+        when:
+        service.autosave(rq)
+
+        then:
+        1 * taskProgressMapper.toTaskProgress(rq, existing) >> mapped
+    }
+
+    def "autosave passes entity from repository save to toTaskProgressAutosaveRs"() {
+        given:
+        def rq = new CodeSnapshotRq(taskProgressId: "tp-1", lastSnapshot: "code")
+
+        def existing = TaskProgress.builder()
+                .userId("user-1").taskId("task-1").topicId("topic-1").courseId("course-1")
+                .taskStatus(TaskStatus.IN_PROGRESS).build()
+        def mapped = TaskProgress.builder().userId("user-1").taskId("task-1").lastSnapshot("code").build()
+        def saved = TaskProgress.builder().userId("user-1").taskId("task-1").updatedAt(LocalDateTime.now()).build()
+
+        taskProgressRepository.findById("tp-1") >> Optional.of(existing)
+        taskProgressMapper.toTaskProgress(rq, existing) >> mapped
+        taskProgressRepository.save(mapped) >> saved
+
+        when:
+        service.autosave(rq)
+
+        then:
+        1 * taskProgressMapper.toTaskProgressAutosaveRs(saved) >> new TaskProgressAutosaveRs("tp-1", LocalDateTime.now())
+    }
+
+    def "autosave works when lastSnapshot is null"() {
+        given:
+        def rq = new CodeSnapshotRq(taskProgressId: "tp-1", lastSnapshot: null)
+
+        def existing = TaskProgress.builder()
+                .userId("user-1").taskId("task-1").topicId("topic-1").courseId("course-1")
+                .taskStatus(TaskStatus.IN_PROGRESS).build()
+        def mapped = TaskProgress.builder().userId("user-1").taskId("task-1").lastSnapshot(null).build()
+        def saved = TaskProgress.builder().userId("user-1").taskId("task-1").build()
+
+        taskProgressRepository.findById("tp-1") >> Optional.of(existing)
+        taskProgressMapper.toTaskProgress(rq, existing) >> mapped
+        taskProgressRepository.save(mapped) >> saved
+        taskProgressMapper.toTaskProgressAutosaveRs(saved) >> new TaskProgressAutosaveRs("tp-1", LocalDateTime.now())
+
+        when:
+        def result = service.autosave(rq)
+
+        then:
+        noExceptionThrown()
+        result.taskProgressId() == "tp-1"
     }
 }
