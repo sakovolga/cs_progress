@@ -1,0 +1,13 @@
+spring:
+  jpa:
+    show-sql: true
+
+logging:
+  level:
+    root: INFO
+    com.example.cs_progress: DEBUG
+    com.example.cs_progress.listener: DEBUG
+    com.example.cs_progress.service: DEBUG
+    org.springframework.amqp: INFO
+    org.springframework.amqp.rabbit.retry: DEBUG
+    org.springframework.retry: DEBUG

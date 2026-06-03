@@ -19,7 +19,7 @@ spring:
     open-in-view: false
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         format_sql: true
@@ -37,33 +37,18 @@ spring:
   ai:
     openai:
       enabled: true
-      api-key: ${OPENAI_API_KEY}  # Или напрямую: sk-proj-...
+      api-key: ${OPENAI_API_KEY}
       chat:
         options:
           model: gpt-4.1-mini
           temperature: 0.7
           max-tokens: 4096
-#    anthropic:
-#      enabled: true
-#      api-key: ${ANTHROPIC_API_KEY}
-#      base-url: https://api.anthropic.com
-#      chat:
-#        options:
-#          model: claude-haiku-4-5-20251001
-#          max-tokens: 4096
-#    ollama:
-#      enabled: true
-#      base-url: http://localhost:11434 # Порт 11434
-#      chat:
-#        options:
-#          model: qwen2.5-coder:7b
-  
   # ============= RABBITMQ НАСТРОЙКИ =============
   rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
+    host: ${RABBITMQ_HOST}
+    port: ${RABBITMQ_PORT}
+    username: ${RABBITMQ_USERNAME}
+    password: ${RABBITMQ_PASSWORD}
     virtual-host: /
     
     listener:
@@ -84,24 +69,6 @@ spring:
           multiplier: 2.0
           max-interval: 10000
   
-  # ЛОГИРОВАНИЕ
-  logging:
-    level:
-      # RabbitMQ логи
-      org.springframework.amqp: INFO
-      org.springframework.amqp.rabbit.retry: DEBUG
-      org.springframework.amqp.rabbit.retry.RepublishMessageRecoverer: INFO
-      com.rabbitmq.client: WARN
-      org.springframework.retry: DEBUG
-      
-      # Наши логи
-      com.example.cs_progress: DEBUG
-      com.example.cs_progress.listener: DEBUG
-      com.example.cs_progress.service: DEBUG
-    
-    pattern:
-      console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-
 server:
   port: ${SERVER_PORT:8083}
 
