@@ -1,5 +1,7 @@
 package com.example.cs_progress.service
 
+import com.example.cs_common.dto.event.AIRatingUpdatedEvent
+import com.example.cs_common.dto.event.SnapshotSentEvent
 import com.example.cs_common.dto.event.TaskCompletedEvent
 import com.example.cs_common.dto.request.CodeSnapshotRq
 import com.example.cs_common.dto.response.TaskProgressAutosaveRs
@@ -471,5 +473,147 @@ class TaskProgressServiceSpec extends Specification {
         then:
         noExceptionThrown()
         result.taskProgressId() == "tp-1"
+    }
+
+    // ── saveSnapshot ──────────────────────────────────────────────────────────
+
+    def "saveSnapshot updates lastSnapshot on existing task progress"() {
+        given:
+        def taskProgress = TaskProgress.builder()
+                .userId("user-1").taskId("task-1").topicId("topic-1").courseId("course-1")
+                .taskStatus(TaskStatus.IN_PROGRESS).lastSnapshot("old code")
+                .build()
+
+        taskProgressRepository.findById("tp-1") >> Optional.of(taskProgress)
+
+        def event = SnapshotSentEvent.builder()
+                .taskProgressId("tp-1")
+                .lastSnapshot("new code")
+                .build()
+
+        when:
+        service.saveSnapshot(event)
+
+        then:
+        taskProgress.lastSnapshot == "new code"
+        1 * taskProgressRepository.save(taskProgress)
+    }
+
+    def "saveSnapshot throws NotFoundException when task progress is not found"() {
+        given:
+        taskProgressRepository.findById("unknown-id") >> Optional.empty()
+
+        def event = SnapshotSentEvent.builder()
+                .taskProgressId("unknown-id")
+                .lastSnapshot("code")
+                .build()
+
+        when:
+        service.saveSnapshot(event)
+
+        then:
+        thrown(NotFoundException)
+    }
+
+    // ── processAIRatingUpdatedEvent ───────────────────────────────────────────
+
+    @Unroll
+    def "AI rating is updated correctly via AIRatingUpdatedEvent: current=#current, incoming=#incoming -> expected=#expected"() {
+        given:
+        def taskProgress = TaskProgress.builder()
+                .userId("user-1").courseId("course-1").topicId("topic-1").taskId("task-1")
+                .taskStatus(TaskStatus.SOLVED)
+                .codeQualityRating(current)
+                .build()
+
+        taskProgressRepository.findById("tp-1") >> Optional.of(taskProgress)
+
+        def event = AIRatingUpdatedEvent.builder()
+                .taskProgressId("tp-1")
+                .codeQualityRating(incoming)
+                .build()
+
+        when:
+        service.processAIRatingUpdatedEvent(event)
+
+        then:
+        taskProgress.codeQualityRating == expected
+
+        where:
+        current                             | incoming                            || expected
+        null                                | CodeQualityRating.NEEDS_IMPROVEMENT || CodeQualityRating.NEEDS_IMPROVEMENT
+        null                                | CodeQualityRating.GOOD              || CodeQualityRating.GOOD
+        null                                | CodeQualityRating.EXCELLENT         || CodeQualityRating.EXCELLENT
+        CodeQualityRating.NEEDS_IMPROVEMENT | CodeQualityRating.GOOD              || CodeQualityRating.GOOD
+        CodeQualityRating.NEEDS_IMPROVEMENT | CodeQualityRating.EXCELLENT         || CodeQualityRating.EXCELLENT
+        CodeQualityRating.NEEDS_IMPROVEMENT | CodeQualityRating.NEEDS_IMPROVEMENT || CodeQualityRating.NEEDS_IMPROVEMENT
+        CodeQualityRating.GOOD              | CodeQualityRating.EXCELLENT         || CodeQualityRating.EXCELLENT
+        CodeQualityRating.GOOD              | CodeQualityRating.NEEDS_IMPROVEMENT || CodeQualityRating.GOOD
+        CodeQualityRating.GOOD              | CodeQualityRating.GOOD              || CodeQualityRating.GOOD
+        CodeQualityRating.EXCELLENT         | CodeQualityRating.GOOD              || CodeQualityRating.EXCELLENT
+        CodeQualityRating.EXCELLENT         | CodeQualityRating.NEEDS_IMPROVEMENT || CodeQualityRating.EXCELLENT
+        CodeQualityRating.EXCELLENT         | CodeQualityRating.EXCELLENT         || CodeQualityRating.EXCELLENT
+    }
+
+    def "processAIRatingUpdatedEvent skips update and cache eviction when incoming rating is null"() {
+        given:
+        def taskProgress = TaskProgress.builder()
+                .userId("user-1").courseId("course-1").topicId("topic-1").taskId("task-1")
+                .taskStatus(TaskStatus.SOLVED)
+                .codeQualityRating(CodeQualityRating.GOOD)
+                .build()
+
+        taskProgressRepository.findById("tp-1") >> Optional.of(taskProgress)
+
+        def event = AIRatingUpdatedEvent.builder()
+                .taskProgressId("tp-1")
+                .codeQualityRating(null)
+                .build()
+
+        when:
+        service.processAIRatingUpdatedEvent(event)
+
+        then:
+        taskProgress.codeQualityRating == CodeQualityRating.GOOD
+        0 * taskProgressRepository.save(_)
+        0 * cacheEvictionService.evictAIInsights(_)
+    }
+
+    def "processAIRatingUpdatedEvent evicts AI insights cache after rating update"() {
+        given:
+        def taskProgress = TaskProgress.builder()
+                .userId("user-1").courseId("course-1").topicId("topic-1").taskId("task-1")
+                .taskStatus(TaskStatus.SOLVED)
+                .codeQualityRating(null)
+                .build()
+
+        taskProgressRepository.findById("tp-1") >> Optional.of(taskProgress)
+
+        def event = AIRatingUpdatedEvent.builder()
+                .taskProgressId("tp-1")
+                .codeQualityRating(CodeQualityRating.GOOD)
+                .build()
+
+        when:
+        service.processAIRatingUpdatedEvent(event)
+
+        then:
+        1 * cacheEvictionService.evictAIInsights("user-1")
+    }
+
+    def "processAIRatingUpdatedEvent throws NotFoundException when task progress is not found"() {
+        given:
+        taskProgressRepository.findById("unknown-id") >> Optional.empty()
+
+        def event = AIRatingUpdatedEvent.builder()
+                .taskProgressId("unknown-id")
+                .codeQualityRating(CodeQualityRating.GOOD)
+                .build()
+
+        when:
+        service.processAIRatingUpdatedEvent(event)
+
+        then:
+        thrown(NotFoundException)
     }
 }
