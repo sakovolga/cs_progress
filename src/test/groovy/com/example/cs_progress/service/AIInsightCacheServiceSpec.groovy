@@ -20,6 +20,15 @@ class AIInsightCacheServiceSpec extends Specification {
 
     // ── getCachedInsight ──────────────────────────────────────────────────────
 
+    def "getCachedInsight throws NullPointerException for null userId"() {
+        when:
+        service.getCachedInsight(null)
+
+        then:
+        thrown(NullPointerException)
+        0 * cacheManager.getCache(_)
+    }
+
     def "getCachedInsight returns null when cache is not registered in CacheManager"() {
         given:
         cacheManager.getCache("ai-insights") >> null
@@ -67,6 +76,15 @@ class AIInsightCacheServiceSpec extends Specification {
 
     // ── generateAndCache ──────────────────────────────────────────────────────
 
+    def "generateAndCache throws NullPointerException for null userId"() {
+        when:
+        service.generateAndCache(null)
+
+        then:
+        thrown(NullPointerException)
+        0 * generatorService.generate(_)
+    }
+
     def "generateAndCache delegates to generator service and returns its result"() {
         given:
         def insight = AIInsightResponse.builder()
@@ -85,6 +103,14 @@ class AIInsightCacheServiceSpec extends Specification {
     }
 
     // ── evictInsight ──────────────────────────────────────────────────────────
+
+    def "evictInsight throws NullPointerException for null userId"() {
+        when:
+        service.evictInsight(null)
+
+        then:
+        thrown(NullPointerException)
+    }
 
     def "evictInsight completes without error"() {
         when:
