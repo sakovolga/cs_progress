@@ -94,10 +94,13 @@ public class DashboardServiceImpl extends BaseService implements DashboardServic
         List<DashboardTopicProgressRs> dashboardTopicProgressList = topicProgressRepository
                 .findByUserIdAndCourseId(userId, courseId);
 
+        Double avgSkillScore = averageStrengthScore(safeBuildTagProgressList(userId, courseId));
+
         DashboardTopicProgressListRs rs = DashboardTopicProgressListRs.builder()
                 .userId(userId)
                 .courseId(courseId)
                 .topicProgressList(dashboardTopicProgressList)
+                .avgSkillScore(avgSkillScore)
                 .build();
 
         log.info("{} Dashboard topics progress received successfully", rs.getTopicProgressList().size());
@@ -112,6 +115,23 @@ public class DashboardServiceImpl extends BaseService implements DashboardServic
     ) {
         log.info("Attempting to get dashboard tags tab for userId: {} and courseId: {}", userId, courseId);
 
+        List<DashboardTagProgressRs> tagProgressList = buildTagProgressList(userId, courseId);
+
+        DashboardTagsTabRs result = DashboardTagsTabRs.builder()
+                .userId(userId)
+                .courseId(courseId)
+                .tagProgressList(tagProgressList)
+                .build();
+
+        log.info(
+                "Dashboard tags tab for userId: {} and courseId: {} constructed successfully with {} tags",
+                userId, courseId, tagProgressList.size()
+        );
+
+        return result;
+    }
+
+    private List<DashboardTagProgressRs> buildTagProgressList(final String userId, final String courseId) {
         Map<String, TagProgress> tagProgressMap = tagProgressRepository
                 .findByUserIdAndCourseId(userId, courseId)
                 .stream()
@@ -128,7 +148,7 @@ public class DashboardServiceImpl extends BaseService implements DashboardServic
                 ))
                 .getTagCounts();
 
-        List<DashboardTagProgressRs> tagProgressList = tagCounts.stream()
+        return tagCounts.stream()
                 .map(tagCount -> {
                     TagProgress tagProgress = tagProgressMap.get(tagCount.getTagName());
 
@@ -148,19 +168,30 @@ public class DashboardServiceImpl extends BaseService implements DashboardServic
                 })
                 .sorted(Comparator.comparingDouble(DashboardTagProgressRs::getStrengthScore).reversed())
                 .toList();
+    }
 
-        DashboardTagsTabRs result = DashboardTagsTabRs.builder()
-                .userId(userId)
-                .courseId(courseId)
-                .tagProgressList(tagProgressList)
-                .build();
+    /**
+     * Unlike the tags tab, the topics tab renders on every dashboard page view, so a course
+     * whose tag overview hasn't been synchronized yet must not break the whole page — it just
+     * means no skill average is available yet.
+     */
+    private List<DashboardTagProgressRs> safeBuildTagProgressList(final String userId, final String courseId) {
+        try {
+            return buildTagProgressList(userId, courseId);
+        } catch (NotFoundException e) {
+            log.info("CourseOverview not yet synchronized for courseId: {}, skipping avgSkillScore", courseId);
+            return List.of();
+        }
+    }
 
-        log.info(
-                "Dashboard tags tab for userId: {} and courseId: {} constructed successfully with {} tags",
-                userId, courseId, tagProgressList.size()
-        );
-
-        return result;
+    private Double averageStrengthScore(final List<DashboardTagProgressRs> tagProgressList) {
+        if (tagProgressList == null || tagProgressList.isEmpty()) {
+            return null;
+        }
+        return tagProgressList.stream()
+                .mapToDouble(DashboardTagProgressRs::getStrengthScore)
+                .average()
+                .getAsDouble();
     }
 
 }
